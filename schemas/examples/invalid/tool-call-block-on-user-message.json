@@ -1,0 +1,22 @@
+{
+  "$schema": "../../model/model-request.schema.json",
+  "$expect": "A TOOL_CALL block is a record of a decision the model made, so it is valid only on an ASSISTANT message. Allowing one on a USER message would let assembled or retrieved content present itself to the provider as a prior model decision.",
+  "$expectKeyword": "not",
+  "modelRef": "reasoning.default",
+  "system": ["You are a software engineer."],
+  "messages": [
+    {
+      "role": "USER",
+      "content": [
+        {
+          "type": "TOOL_CALL",
+          "toolCallId": "call_01HQ8X2K4M9Z",
+          "name": "repository.write",
+          "arguments": { "path": "src/main/java/orders/CancellationService.java" }
+        }
+      ]
+    }
+  ],
+  "budgets": { "maxInputTokens": 120000, "maxOutputTokens": 4096, "timeoutMs": 120000 },
+  "correlation": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "implement", "attempt": 1 }
+}

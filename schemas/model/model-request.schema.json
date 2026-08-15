@@ -28,11 +28,41 @@
           },
           "toolCallId": {
             "type": "string",
-            "description": "Present on TOOL_RESULT messages, correlating to the originating tool call."
+            "description": "Present on TOOL_RESULT messages, correlating to the originating tool call.",
+            "minLength": 1
           }
         },
         "required": ["role", "content"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "$comment": "A tool call is something only the assistant can have made. Permitting a TOOL_CALL block on a USER or TOOL_RESULT message would let retrieved or tool-returned content masquerade as a model decision.",
+            "if": {
+              "properties": { "role": { "enum": ["USER", "TOOL_RESULT"] } },
+              "required": ["role"]
+            },
+            "then": {
+              "properties": {
+                "content": {
+                  "items": {
+                    "not": {
+                      "properties": { "type": { "const": "TOOL_CALL" } },
+                      "required": ["type"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$comment": "Without this correlation the result cannot be matched to the call that produced it, which is the mirror half of representing the assistant's tool-call turn.",
+            "if": {
+              "properties": { "role": { "const": "TOOL_RESULT" } },
+              "required": ["role"]
+            },
+            "then": { "required": ["toolCallId"] }
+          }
+        ]
       },
       "minItems": 1
     },
@@ -118,6 +148,18 @@
             "ref": { "$ref": "../artifacts/artifact-ref.schema.json" }
           },
           "required": ["type", "ref"],
+          "additionalProperties": false
+        },
+        {
+          "$comment": "Carries the assistant's own tool-call turn back into history. Both major providers require that turn to precede the corresponding tool result, so without it an agent loop of more than one iteration cannot be expressed and the gateway would have to reconstruct or drop it. Self-contained rather than referencing ModelResponse.toolCalls[], because a request carries no such array.",
+          "type": "object",
+          "properties": {
+            "type": { "const": "TOOL_CALL" },
+            "toolCallId": { "type": "string", "minLength": 1 },
+            "name": { "type": "string", "minLength": 1 },
+            "arguments": { "type": "object" }
+          },
+          "required": ["type", "toolCallId", "name", "arguments"],
           "additionalProperties": false
         }
       ]

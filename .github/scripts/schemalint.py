@@ -186,6 +186,9 @@ def validate_examples(documents: dict[Path, dict]) -> str:
         target = instance.pop("$schema", None)
         expectation = instance.pop("$expect", None)
         expected_keyword = instance.pop("$expectKeyword", None)
+        # $comment is a standard annotation keyword, stripped so an example can explain
+        # what it demonstrates without that explanation tripping additionalProperties.
+        instance.pop("$comment", None)
         if not target:
             fail(path, "example must name the schema it exercises via a relative $schema")
             continue

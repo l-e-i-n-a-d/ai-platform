@@ -1,0 +1,15 @@
+{
+  "$schema": "../../model/model-request.schema.json",
+  "$expect": "A TOOL_RESULT message must carry the toolCallId of the call it answers. Without it the result cannot be matched to its call, and with several calls outstanding in one iteration the gateway would have to guess the pairing.",
+  "$expectKeyword": "required",
+  "modelRef": "reasoning.default",
+  "system": ["You are a software engineer."],
+  "messages": [
+    {
+      "role": "TOOL_RESULT",
+      "content": [{ "type": "TEXT", "text": "2 matches found" }]
+    }
+  ],
+  "budgets": { "maxInputTokens": 120000, "maxOutputTokens": 4096, "timeoutMs": 120000 },
+  "correlation": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "implement", "attempt": 1 }
+}

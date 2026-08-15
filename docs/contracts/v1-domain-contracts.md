@@ -561,6 +561,13 @@ Produces one ModelResponse.
 - **INV-51** `system[]` is platform-authored and never assembled from retrieved content.
 - **INV-52** Credentials never appear in a ModelRequest. The gateway holds them; the runtime
   never has them.
+- **INV-87** The assistant's own tool-call turn is representable in `messages[]`, via a
+  self-contained `TOOL_CALL` content block, and appears **before** the corresponding
+  `TOOL_RESULT`. A `TOOL_CALL` block on a `USER` or `TOOL_RESULT` message is rejected: only the
+  assistant makes tool calls, and permitting the block elsewhere would let assembled or
+  tool-returned content present itself to the provider as a prior model decision.
+- **INV-88** A `TOOL_RESULT` message carries the `toolCallId` of the call it answers. With
+  several calls outstanding in one iteration, the pairing is otherwise a guess.
 
 ### 5.11 ModelResponse
 
@@ -1030,7 +1037,7 @@ Two consequences worth stating because they are easy to miss:
 
 ## 8. Invariant traceability
 
-The 86 invariants in §5 are the testable form of the ADRs. Grouped by where they must be
+The 88 invariants in §5 are the testable form of the ADRs. Grouped by where they must be
 enforced:
 
 | Enforced in | Invariants | Test approach |
@@ -1038,7 +1045,7 @@ enforced:
 | Graph publication | INV-01..06, INV-08..10 | schema + static validation, condition totality checking |
 | Graph engine | INV-11..16, INV-17..21, INV-69..72 | crash-injection at every transition point |
 | Tool layer | INV-07, INV-26..40 | authorization matrix; idempotency double-run tests |
-| Model gateway | INV-47..57 | two-provider conformance suite against one recorded scenario |
+| Model gateway | INV-47..57, INV-87..88 | two-provider conformance suite against one recorded scenario |
 | Executor | INV-58..68, INV-79..86 | executor contract suite + remote-simulation mode |
 | Context engine | INV-41..46 | provenance completeness assertions |
 | Approval component | INV-73..78 | subject-mutation and expiry tests |
@@ -1059,12 +1066,13 @@ review-dependent:
 
 ## 9. Defects found in existing contracts
 
-Two problems in the current schemas were surfaced by writing this specification. Both are
-corrections, not decisions, and neither needs an ADR.
+Two problems in the current schemas were surfaced by writing this specification. Neither is a
+consequence of a decision being wrong; both are places where the schemas fail to express what the
+ADRs already imply. DEF-01 has been fixed. DEF-02 turns out not to be fixable in isolation.
 
 ### DEF-01 — ModelRequest cannot represent an assistant turn containing tool calls
 
-**Severity: High. Blocks the agent loop.**
+**Severity: High. Blocks the agent loop. Fixed — no ADR required.**
 
 `ModelRequest.messages[].content[]` permits only `TEXT` and `ARTIFACT` blocks, and the role enum
 is `USER | ASSISTANT | TOOL_RESULT`. There is therefore **no way to represent the assistant's own
@@ -1075,21 +1083,39 @@ agent loop of more than one iteration cannot be expressed. The gateway would be 
 reconstruct or drop it, and dropping it changes what the model sees between iteration one and
 iteration two.
 
-**Correction:** add a `TOOL_CALL` content block — `{ type, toolCallId, name, arguments }` — to the
-`ASSISTANT` role, mirroring `ModelResponse.toolCalls[]`.
+**Correction applied.** `ModelRequest.messages[].content[]` now admits a self-contained
+`TOOL_CALL` block — `{ type, toolCallId, name, arguments }` — mirroring
+`ModelResponse.toolCalls[]`. It is self-contained rather than a reference into a sibling array
+because a request carries no `toolCalls[]` to refer to.
+
+Two adjacent constraints were added at the same time, because a tool-call turn that cannot be
+attributed or correlated does not solve the problem:
+
+- A `TOOL_CALL` block is rejected on `USER` and `TOOL_RESULT` messages. Only the assistant makes
+  tool calls; permitting the block elsewhere would let assembled or tool-returned content present
+  itself to the provider as a prior model decision.
+- A `TOOL_RESULT` message must carry `toolCallId`. With several calls outstanding in one
+  iteration, the pairing is otherwise a guess.
+
+All three are covered by examples under `schemas/examples/`, and each was verified by mutation:
+removing any one of them makes the example suite fail.
 
 ### DEF-02 — `pathScope` is ambiguous in multi-repository runs
 
-**Severity: Medium.**
+**Severity: Medium. Open — resolve with OQ-07, which requires an ADR.**
 
 `GraphRun.repositories[]` and `WorkspaceSpec.repositories[]` are both lists, but
 `CapabilityGrant.pathScope` is a flat set of globs over a single workspace-relative namespace.
 With two repositories materialised into one workspace, `src/**` is ambiguous, and a grant intended
 to permit writes in one repository silently permits them in the other.
 
-**Correction:** define the workspace layout — the natural choice is a `<repositoryId>/` prefix per
-repository — and require `pathScope` globs to be rooted at it. This is a contract fix, but it is
-adjacent to OQ-07 and should be resolved with it.
+**Correction, not yet applied.** The fix is to define the workspace layout — the natural choice is
+a `<repositoryId>/` prefix per repository — and require `pathScope` globs to be rooted at it.
+
+This was originally classified as a pure correction. That was wrong: the layout it depends on is
+not implied by any accepted ADR, and choosing one here would be inventing the answer to OQ-07
+rather than recording it. It is left open deliberately, and should be fixed in the same change
+that resolves OQ-07.
 
 ---
 
