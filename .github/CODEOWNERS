@@ -18,6 +18,7 @@
 
 # Component contracts. Drift here is what the documentation checks exist to catch.
 /docs/architecture/         @l-e-i-n-a-d
+/docs/contracts/            @l-e-i-n-a-d
 /docs/integrations/         @l-e-i-n-a-d
 
 # Instructions consumed by AI coding agents. These files steer future automated

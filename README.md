@@ -48,6 +48,7 @@ See:
 - [EVALUATION.md](EVALUATION.md)
 - [GLOSSARY.md](GLOSSARY.md)
 - [docs/decisions/](docs/decisions/README.md) — architecture decision records
+- [docs/contracts/](docs/contracts/v1-domain-contracts.md) — V1 domain contract specification
 - [schemas/](schemas/README.md) — machine-readable contract schemas derived from the ADRs
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 
