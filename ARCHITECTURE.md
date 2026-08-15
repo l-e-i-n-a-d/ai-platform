@@ -90,6 +90,15 @@ See [ADR-0007](docs/decisions/0007-operational-persistence-and-local-first-stora
 
 ## 3. Core Components
 
+### CLI
+
+The V1 entry surface: start, observe, approve, cancel, resume and inspect runs. A thin client
+over the control-plane REST API with no business logic, so a future UI is a peer client rather
+than a rewrite. It is also where local operator consent for approvals is established, since V1
+has no central identity.
+
+See [ADR-0018](docs/decisions/0018-developer-entry-surface-cli.md).
+
 ### Quarkus Control Plane
 
 Responsible for:

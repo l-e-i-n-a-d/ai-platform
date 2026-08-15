@@ -24,7 +24,10 @@ V1 runs entirely on a developer's machine and needs no cloud account. It does re
 - Java and Python toolchains for the control plane and agent runtime
 - credentials for GitHub, Jira, Confluence and at least one model provider, held locally
 
-See [ADR-0006](docs/decisions/0006-local-execution-isolation-and-credentials.md).
+Node is **not** a V1 prerequisite: the entry surface is a CLI, and the Angular UI is deferred.
+
+See [ADR-0006](docs/decisions/0006-local-execution-isolation-and-credentials.md) and
+[ADR-0018](docs/decisions/0018-developer-entry-surface-cli.md).
 
 ## Repository
 

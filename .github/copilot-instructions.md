@@ -71,6 +71,8 @@ The engineering organization uses:
 
 - Angular
 
+No UI is built in V1. The V1 entry surface is a CLI, and Node is not a V1 prerequisite. Angular remains the chosen technology when a UI is required — see ADR-0018 for the trigger.
+
 ## Cloud
 
 - Microsoft Azure

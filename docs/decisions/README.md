@@ -61,7 +61,7 @@ is taken.
 | 0015 | Observability contracts and OpenTelemetry-first instrumentation | Planned |
 | 0016 | Audit model and attribution limits without central identity | Planned |
 | 0017 | Artifact classification, retention and redaction | Planned |
-| 0018 | Developer entry surface: CLI in V1, UI deferred | Planned |
+| 0018 | [Developer entry surface: CLI in V1, UI deferred](0018-developer-entry-surface-cli.md) | **Accepted** |
 
 Deferred questions, documented but not yet decided: eventing mechanism; Kubernetes executor;
 hosted multi-user identity; Key Vault adoption; webhook ingestion; evaluation gating

@@ -22,6 +22,7 @@ No production implementation is required.
 Goals:
 
 - local developer startup
+- **CLI entry surface** (see ADR-0018)
 - Quarkus control plane
 - Python agent runtime
 - model gateway
@@ -36,7 +37,8 @@ Goals:
 
 Success criterion:
 
-A developer can run a complete small engineering workflow locally.
+A developer can run a complete small engineering workflow locally, and reach a first successful
+run within thirty minutes of cloning the repository.
 
 Example:
 
