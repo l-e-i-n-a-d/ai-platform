@@ -90,6 +90,20 @@ Metrics, logs and traces that allow platform behavior to be understood and diagn
 
 An identifier used to connect related operations across graphs, agents, tools, models and execution workspaces.
 
+In practice these are W3C Trace Context `traceId` and `spanId`, propagated across every boundary and persisted on every durable document. The platform does not maintain a second correlation scheme; domain identifiers such as `runId` are span and log *attributes*, never metric labels.
+
+## Context Bundle
+
+The immutable, content-addressed artifact that carries everything an agent knows for a node: a token budget, revision pins, an ordered item list with per-item provenance and trust class, and an explicit list of what was excluded and why.
+
+## Telemetry
+
+Traces, metrics and logs. May be sampled, dropped or disabled — which is precisely why telemetry can never satisfy an audit requirement.
+
+## Audit Trail
+
+The durable, unsampled record of consequential platform actions, retained independently of telemetry.
+
 ## System of Record
 
 The authoritative external system for a particular type of information.

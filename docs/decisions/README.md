@@ -58,7 +58,7 @@ is taken.
 | 0012 | GitHub actor identity and repository access scoping | Planned |
 | 0013 | [Context bundle contract, budgets and provenance](0013-context-bundle-contract.md) | **Accepted** |
 | 0014 | [Repository registry and instruction precedence](0014-repository-registry-and-instruction-precedence.md) | **Accepted** |
-| 0015 | Observability contracts and OpenTelemetry-first instrumentation | Planned |
+| 0015 | [Telemetry contracts, correlation and collection model](0015-telemetry-contracts-and-collection-model.md) | **Accepted** |
 | 0016 | Audit model and attribution limits without central identity | Planned |
 | 0017 | Artifact classification, retention and redaction | Planned |
 | 0018 | [Developer entry surface: CLI in V1, UI deferred](0018-developer-entry-surface-cli.md) | **Accepted** |

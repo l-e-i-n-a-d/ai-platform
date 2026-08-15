@@ -32,6 +32,7 @@ Goals:
 - local artifact storage
 - repository registry and capability ceilings (see ADR-0014)
 - context bundles with budgets, pinning and provenance (see ADR-0013)
+- OpenTelemetry instrumentation, trace propagation and structured logs (see ADR-0015)
 - basic Jira integration
 - basic Confluence integration
 - basic GitHub integration
@@ -71,11 +72,15 @@ Goals:
 
 ---
 
-## Phase 3 — Observability
+## Phase 3 — Observability Backends
 
-Introduce:
+Instrumentation already exists from Phase 1 (see ADR-0015): OpenTelemetry API spans, metrics and
+structured logs, W3C trace context propagation across CLI, control plane, agent runtime and
+executor, and `traceId`/`spanId` on every persisted document.
 
-- OpenTelemetry
+This phase deploys the stack that consumes it:
+
+- OpenTelemetry Collector
 - Prometheus
 - Loki
 - Grafana
@@ -83,13 +88,13 @@ Introduce:
 
 Add:
 
-- metrics
-- logs
-- traces
 - dashboards
-- alerts
+- alerts, starting with the security signals (`platform_tool_denied_total`,
+  `platform_egress_denied_total`)
+- retention policies
 
-The platform should already have stable correlation IDs before this phase.
+Because business logic depends only on the OpenTelemetry API and exports OTLP to a collector,
+this phase is configuration rather than code change.
 
 ---
 

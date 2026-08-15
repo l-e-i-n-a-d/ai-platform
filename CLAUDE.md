@@ -150,15 +150,21 @@ See ADR-0007. Do not introduce another database without an ADR.
 
 ## Observability
 
-Design for:
+Instrument in Phase 1 against the **OpenTelemetry API only**. Deploy the backends — Prometheus,
+Loki, Grafana, Alertmanager — in Phase 3. Do not require the complete observability stack for
+V1, and do not defer instrumentation to the phase that deploys it (ADR-0015).
 
-- OpenTelemetry
-- Prometheus
-- Loki
-- Grafana
-- Alertmanager
+Push OTLP to a collector. Never expose a Prometheus scrape endpoint and never import a
+Prometheus, Loki or Grafana client into business logic.
 
-Do not require the complete observability stack for V1.
+Propagate W3C Trace Context across every boundary, including `TRACEPARENT` into executor
+processes. Persist `traceId` and `spanId` on every durable document.
+
+`runId`, `nodeId`, `workspaceId` and all invocation identifiers are **forbidden as metric
+labels**. They belong on spans and logs.
+
+Never log prompts, completions or file contents at default levels — log the artifact reference.
+Telemetry is not audit.
 
 ---
 

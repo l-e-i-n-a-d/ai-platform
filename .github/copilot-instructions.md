@@ -724,56 +724,50 @@ Do not design the system around the assumption that agents should always operate
 
 Observability is a first-class architectural concern.
 
-The future observability stack is expected to include:
+**Instrumentation and deployment are different things and happen in different phases (ADR-0015).**
 
-- OpenTelemetry
-- Prometheus
-- Loki
-- Grafana
-- Alertmanager
+Instrument in Phase 1. Business logic depends on the **OpenTelemetry API only** — spans, metrics, structured logs and W3C trace context propagation are written alongside the code they describe. Retrofitting them later is a cross-cutting migration across two languages and three processes.
 
-Do NOT make the full observability stack a V1 infrastructure requirement.
+Deploy the backends in Phase 3: Prometheus, Loki, Grafana, Alertmanager. Do NOT make the full observability stack a V1 infrastructure requirement.
 
-The V1 platform should establish telemetry contracts and correlation identifiers so the full stack can be added later.
+All signals are pushed over **OTLP to an OpenTelemetry Collector**, which owns backend translation. Do not expose Prometheus scrape endpoints: V1 components are short-lived laptop processes with no stable scrape target. Do not import a Prometheus, Loki or Grafana client into business logic.
 
-The platform should eventually expose:
+## Correlation
+
+W3C Trace Context is mandatory at every boundary: CLI to control plane, control plane to agent runtime and back, and tool layer to executor via `TRACEPARENT` (one of the few allowlisted environment variables — it carries no authority, which is why it is safe where credentials are not).
+
+`traceId` and `spanId` **are** the correlation identifiers. Do not invent a second correlation scheme.
+
+**Every persisted document carries `traceId` and `spanId`**, so durable state and telemetry are navigable in both directions.
+
+Canonical identifier names, used identically in Java, Python, logs, spans, persistence and the CLI:
+
+```text
+runId, nodeId, attempt, graphId, graphVersion,
+agentId, toolInvocationId, modelInvocationId,
+workspaceId, executionId, workItemKey, repositoryId,
+approvalId, contextBundleRef, actor
+```
 
 ## Metrics
 
-Examples:
+The catalogue and permitted labels are in `docs/architecture/observability.md`.
 
-- API request count
-- API latency
-- error rates
-- graph runs
-- agent runs
-- node execution duration
-- retries
-- failures
-- model latency
-- token usage
-- estimated model cost
-- workspace execution time
-- CI success/failure
-- task success rate
+**Cardinality rule:** `runId`, `nodeId`, `workspaceId`, `executionId`, `workItemKey`, `contextBundleRef` and all invocation identifiers are **forbidden as metric labels**. They belong on spans, logs and exemplars. Metric labels must be low-cardinality and bounded by design: graph, graph version, node type, tool, provider, model, outcome, failure category.
+
+`platform_tool_denied_total` and `platform_egress_denied_total` are security signals, not performance metrics.
+
+Token usage and cost come from the model gateway's records only. Never recompute cost independently.
 
 ## Logs
 
-Logs should support correlation by identifiers such as:
+Structured JSON, one schema across both runtimes. Mandatory fields: `timestamp`, `level`, `message`, `service`, `serviceVersion`, `traceId`, `spanId`. Contextual: `runId`, `nodeId`, `attempt`, `actor`, `repositoryId`, relevant invocation id.
 
-- request ID
-- work item ID
-- run ID
-- graph ID/version
-- node ID
-- agent ID
-- workspace ID
-- model invocation ID
-- tool invocation ID
+Never log prompts, completions, tool results or file contents at default levels — log the artifact reference instead. Redaction is shared with model egress.
 
 ## Traces
 
-The architecture should eventually support end-to-end traces such as:
+The architecture should support end-to-end traces such as:
 
 ```text
 Jira Issue
@@ -799,11 +793,11 @@ Repair
 Pull Request
 ```
 
-Use OpenTelemetry as the preferred instrumentation abstraction.
+Model spans use OpenTelemetry **GenAI semantic conventions** (`gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.*`), not bespoke attribute names.
 
-Do not couple business logic directly to Grafana.
+## Telemetry is not audit
 
-Do not couple business logic directly to Prometheus or Loki when an instrumentation abstraction is appropriate.
+Telemetry may be sampled, dropped or disabled. The audit trail may not — it is durable, unsampled and retained independently. Never satisfy an audit requirement with a log line.
 
 ---
 

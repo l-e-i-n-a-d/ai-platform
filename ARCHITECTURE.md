@@ -357,27 +357,34 @@ If the platform becomes a centrally hosted multi-user service, authentication an
 
 ## 7. Observability
 
-The architecture is designed to support:
+Instrumentation and deployment are separate concerns and happen in different phases.
 
-- OpenTelemetry
-- Prometheus
-- Loki
-- Grafana
-- Alertmanager
+Business logic depends on the **OpenTelemetry API only**, from Phase 1. Nothing imports a
+Prometheus, Loki or Grafana client. All signals are pushed over OTLP to an OpenTelemetry
+Collector, which owns backend translation — V1 components are short-lived laptop processes, so
+pull-based scraping cannot reach them.
 
-The complete stack is not a V1 deployment requirement.
+The stack the collector feeds — Prometheus, Loki, Grafana, Alertmanager — is deployed in
+Phase 3 and is not a V1 requirement. Because instrumentation already exists, that phase is
+configuration rather than code change.
 
-Correlation identifiers should exist from the beginning:
+Correlation is W3C Trace Context, propagated across CLI, control plane, agent runtime and
+executor (`TRACEPARENT`, one of the few allowlisted environment variables). `traceId` and
+`spanId` **are** the correlation identifiers, and every persisted document carries them, so
+durable state and telemetry are navigable in both directions.
 
-- request ID
-- work item ID
-- run ID
-- graph ID/version
-- node ID
-- agent ID
-- workspace ID
-- model invocation ID
-- tool invocation ID
+Domain identifiers — `runId`, `nodeId`, `attempt`, `graphId`, `graphVersion`, `agentId`,
+`workspaceId`, `executionId`, `workItemKey`, `repositoryId`, `approvalId`, `contextBundleRef`,
+`toolInvocationId`, `modelInvocationId`, `actor` — are span and log attributes.
+
+**They are forbidden as metric labels.** Metric labels must be low-cardinality and bounded by
+design: graph, graph version, node type, tool, provider, model, outcome, failure category.
+
+See [ADR-0015](docs/decisions/0015-telemetry-contracts-and-collection-model.md) and
+[docs/architecture/observability.md](docs/architecture/observability.md).
+
+Telemetry may be sampled or disabled. The audit trail may not — it is durable, unsampled and
+retained independently.
 
 ---
 
