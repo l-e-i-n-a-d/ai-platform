@@ -103,6 +103,10 @@ this phase is configuration rather than code change.
 
 ## Phase 4 — Evaluation Platform
 
+Architecture: [docs/architecture/evaluation.md](docs/architecture/evaluation.md). The identity,
+provenance and pinning this phase depends on are established in the V1 contracts, so that the
+first evaluation does not require re-instrumenting the platform.
+
 Build repeatable evaluations for:
 
 - models

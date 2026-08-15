@@ -81,7 +81,43 @@ the example documents — including `schemas/examples/invalid/`, where each docu
 rejected *for the specific reason it declares*. That last part is what makes a deleted
 security constraint fail loudly rather than silently.
 
-Both run in CI via [.github/workflows/docs.yml](.github/workflows/docs.yml).
+`doclint` additionally fails on the domain names ADR-0019 retired, in Markdown and schemas
+alike. A vocabulary decision that is not mechanically checked degrades within weeks, because
+every contributor reintroduces the name they personally find natural.
+
+`schemalint` additionally enforces ADR-0020 §2 across the transitive `$ref` closure of every
+content-addressed document: no floats, no nulls. This is not a style rule. RFC 8785 delegates
+number formatting to ECMAScript `Number::toString`, whose Java and Python equivalents disagree
+in several ranges, so a float reachable from a hashed document makes its hash depend on which
+language produced it.
+
+### Contracts
+
+The JSON Schemas are the single source of truth for both languages (ADR-0024). Java and Python
+models are **generated** from them and committed, so a contract change and its effect on both
+languages appear in the same diff. Never edit a file under `contracts/*/generated/` — regenerate
+it:
+
+```bash
+python3 .github/scripts/codegen.py           # regenerate
+python3 .github/scripts/codegen.py --check   # fail if the committed output is stale
+```
+
+Then verify that the two languages actually agree:
+
+```bash
+python3 .github/scripts/contract_test.py
+```
+
+This compares the schemas, the Java types by reflection and the Python types by introspection —
+three-way, because a two-way check would only prove the generator agrees with itself. It also
+verifies that both languages reproduce the canonical hashing vectors in
+`schemas/hashing/vectors.json` from independent implementations. Sharing one implementation
+would prove only that both call the same code.
+
+All four checks run in CI via [.github/workflows/docs.yml](.github/workflows/docs.yml), offline:
+no Azure, no Cosmos DB, no model provider. A contract check that needs credentials is a contract
+check that gets skipped.
 
 These checks catch structure, not judgement. They will not tell you that a decision is
 wrong, only that the documentation is inconsistent with itself.

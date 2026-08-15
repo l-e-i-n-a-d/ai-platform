@@ -16,6 +16,14 @@
 # Python agent runtime. A change here is a change to a cross-language contract.
 /schemas/                   @l-e-i-n-a-d
 
+# Generated contract models. Nothing here is hand-written (ADR-0024 §4), so a diff that is
+# not accompanied by a schema change means someone edited generated code.
+/contracts/                 @l-e-i-n-a-d
+
+# The generator and the consistency checks. These decide what "the contracts agree" means,
+# so weakening one is indistinguishable from the drift it was written to prevent.
+/.github/scripts/           @l-e-i-n-a-d
+
 # Component contracts. Drift here is what the documentation checks exist to catch.
 /docs/architecture/         @l-e-i-n-a-d
 /docs/contracts/            @l-e-i-n-a-d

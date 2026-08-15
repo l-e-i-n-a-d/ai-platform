@@ -2,14 +2,16 @@
 
 ## Status
 
-**Proposed — 2026-08-15.** Not yet accepted. No component implements this.
+**Accepted — 2026-08-15.** No component implements this yet; the contracts are frozen for M3.
 
-This document specifies the V1 domain contracts implied by the eighteen accepted ADRs in
+This document specifies the V1 domain contracts implied by the twenty-seven accepted ADRs in
 [`docs/decisions/`](../decisions/README.md). It is a *derivation*, not a new set of decisions:
-where it states something the ADRs already decided, the ADR governs. Where it had to choose
-something the ADRs left open, it says so explicitly and lists the choice in
-[§10 Open questions](#10-open-questions-requiring-an-architectural-decision) rather than
-quietly settling it.
+where it states something the ADRs already decided, the ADR governs.
+
+When first written it listed eleven questions it could not answer without inventing architecture.
+Ten have since been decided — ADR-0019 through ADR-0027 exist because of them — and the decisions
+are reflected throughout. The one that remains open is tracked in
+[§10](#10-open-questions-requiring-an-architectural-decision) and does not block implementation.
 
 Nothing here should surprise a reader of the ADRs. If something does, that is a finding.
 
@@ -32,7 +34,8 @@ This document closes that gap for the sixteen V1 entities.
 - Not an API specification. Endpoint shapes are in ADR-0004 §11.
 - Not a persistence schema. The storage mapping in §7 is indicative; ADR-0007 governs.
 - Not an implementation plan. Sequencing is in `ROADMAP.md`.
-- Not a licence to start coding. Several open questions in §10 change the data model.
+- Not a substitute for the schemas. Where this document and a schema disagree, the schema is
+  the source of truth (ADR-0024 §1) and the disagreement is a bug in this document.
 
 ### One correction to the stated premise
 
@@ -47,33 +50,43 @@ Where the older goal list said "Cosmos DB is the operational persistence layer",
 
 ---
 
-## 2. Naming reconciliation
+## 2. Canonical vocabulary and artifact index
 
-The domain vocabulary requested for this specification differs from the names currently used in
-the ADRs and schemas. The mapping below is exact; §10 OQ-01 asks which set should win.
+ADR-0019 froze the domain vocabulary and retired nine competing names. Every entity below now has
+exactly one name and exactly one canonical schema; `doclint` fails the build if a retired name
+reappears in a Markdown document or a schema.
 
-| This document | ADR / schema name | Artifact |
-|---|---|---|
-| `Graph` | GraphDefinition | [`schemas/graph/graph.schema.json`](../../schemas/graph/graph.schema.json) |
-| `GraphRun` | Run | [`schemas/graph/graph-run.schema.json`](../../schemas/graph/graph-run.schema.json) |
-| `GraphNode` | node (embedded in the definition) | `graph-definition.schema.json#/$defs/node` |
-| `NodeRun` | NodeExecution | [`schemas/graph/node-run.schema.json`](../../schemas/graph/node-run.schema.json) |
-| `Agent` | agent definition | **no schema** — see §5.5 and OQ-02 |
-| `Tool` | Tool | [`schemas/tools/tool.schema.json`](../../schemas/tools/tool.schema.json) |
-| `ToolRequest` | — | **no schema** — see §5.7 and OQ-03 |
-| `ToolResult` | — | **no schema** — see §5.8 and OQ-03 |
-| `ContextBundle` | ContextBundle | [`schemas/context/context-bundle.schema.json`](../../schemas/context/context-bundle.schema.json) |
-| `ModelRequest` | ModelRequest | [`schemas/model/model-request.schema.json`](../../schemas/model/model-request.schema.json) |
-| `ModelResponse` | ModelResponse | [`schemas/model/model-response.schema.json`](../../schemas/model/model-response.schema.json) |
-| `ExecutionRequest` | ExecutionRequest | [`schemas/execution/execution-request.schema.json`](../../schemas/execution/execution-request.schema.json) |
-| `ExecutionResult` | ExecutionResult | [`schemas/execution/execution-result.schema.json`](../../schemas/execution/execution-result.schema.json) |
-| `Checkpoint` | Checkpoint | [`schemas/graph/checkpoint.schema.json`](../../schemas/graph/checkpoint.schema.json) |
-| `Approval` | Approval | [`schemas/approval/approval.schema.json`](../../schemas/approval/approval.schema.json) |
-| `Workspace` | WorkspaceSpec (creation input only) | [`schemas/execution/workspace-spec.schema.json`](../../schemas/execution/workspace-spec.schema.json) |
+| Entity | Canonical schema |
+|---|---|
+| `Graph` | [`schemas/graph/graph.schema.json`](../../schemas/graph/graph.schema.json) |
+| `GraphNode` | `graph.schema.json#/$defs/node` (embedded in `Graph`) |
+| `GraphRun` | [`schemas/graph/graph-run.schema.json`](../../schemas/graph/graph-run.schema.json) |
+| `NodeRun` | [`schemas/graph/node-run.schema.json`](../../schemas/graph/node-run.schema.json) |
+| `Agent` | [`schemas/agent/agent.schema.json`](../../schemas/agent/agent.schema.json) |
+| `Tool` | [`schemas/tools/tool.schema.json`](../../schemas/tools/tool.schema.json) |
+| `ToolRequest` | [`schemas/tools/tool-request.schema.json`](../../schemas/tools/tool-request.schema.json) |
+| `ToolResult` | [`schemas/tools/tool-result.schema.json`](../../schemas/tools/tool-result.schema.json) |
+| `ContextBundle` | [`schemas/context/context-bundle.schema.json`](../../schemas/context/context-bundle.schema.json) |
+| `ModelRequest` | [`schemas/model/model-request.schema.json`](../../schemas/model/model-request.schema.json) |
+| `ModelResponse` | [`schemas/model/model-response.schema.json`](../../schemas/model/model-response.schema.json) |
+| `ExecutionRequest` | [`schemas/execution/execution-request.schema.json`](../../schemas/execution/execution-request.schema.json) |
+| `ExecutionResult` | [`schemas/execution/execution-result.schema.json`](../../schemas/execution/execution-result.schema.json) |
+| `Checkpoint` | [`schemas/graph/checkpoint.schema.json`](../../schemas/graph/checkpoint.schema.json) |
+| `Approval` | [`schemas/approval/approval.schema.json`](../../schemas/approval/approval.schema.json) |
+| `Workspace` | [`schemas/execution/workspace.schema.json`](../../schemas/execution/workspace.schema.json) |
 
-Three entities in this list have **no contract at all** today: `Agent`, `ToolRequest` and
-`ToolResult`. A fourth, `Workspace`, has an input specification but no durable record. These are
-the substantive gaps this exercise surfaced, and they are addressed in §5.
+`Workspace` additionally has a creation input,
+[`workspace-spec.schema.json`](../../schemas/execution/workspace-spec.schema.json). The two are
+deliberately separate: a specification is what a run asks for, a `Workspace` is what the executor
+made and must account for afterwards.
+
+Wire messages keep their `Request`/`Result` suffixes — `ToolRequest`, `ModelResponse`,
+`ExecutionRequest` — because they name messages rather than entities. ADR-0019 §3 records this as
+an exception rather than an inconsistency.
+
+Four entities had no contract at all when this document was first written: `Agent`, `ToolRequest`,
+`ToolResult` and the durable `Workspace` record. All four now exist, and Java and Python models are
+generated from them.
 
 ---
 
@@ -158,7 +171,10 @@ lowercase hex.
 
 This matters more than it looks: `graphVersionHash`, `bundleRef`, `subjectHash` and the audit
 hash chain all depend on two languages producing byte-identical serialisations. It needs a
-cross-language conformance test, not an assumption. (OQ-09.)
+cross-language conformance test, not an assumption. ADR-0020 decides the specification and
+`schemas/hashing/vectors.json` provides twelve language-independent vectors; Java and Python
+implement the canonicalisation *separately*, because a shared implementation would prove only that
+both call the same code.
 
 ### 4.4 Versioning
 
@@ -166,7 +182,7 @@ cross-language conformance test, not an assumption. (OQ-09.)
 |---|---|
 | Graph | content hash; immutable; runs pin |
 | Tool | semantic version; descriptors immutable per version |
-| Agent | semantic version; **pinning unresolved — OQ-02** |
+| Agent | content hash (`agentVersionHash`); immutable; runs pin via `GraphRun.agentPins` (ADR-0022) |
 | Protocol (ADR-0004) | `protocolVersion`, fail-fast at startup |
 | Schemas | `v1` path segment |
 | RepositoryRecord | `configHash` recorded on grants and audit entries |
@@ -242,8 +258,8 @@ The security-relevant field is `requestedCapabilities` on an `agent` node: `allo
 `maxSideEffect`, `commandProfiles`.
 
 **Relationships.** Belongs to exactly one Graph version. Produces zero or more NodeRuns per
-GraphRun — *zero* if skipped, *more than one* under retry, and (unresolved, OQ-04) more than one
-under loop iteration.
+GraphRun — *zero* if skipped, *more than one* under retry, and more than one under loop iteration.
+ADR-0021 makes those two cases distinguishable rather than colliding.
 
 **Invariants.**
 
@@ -338,9 +354,11 @@ CapabilityGrant, 0..1 ContextBundle reference, 0..* ModelInvocations, 0..* ToolI
 
 **Invariants.**
 
-- **INV-17** Identity is `(runId, nodeId, attempt)`. Records are **never overwritten** by a
-  retry; each attempt keeps its own record, because evaluation depends on seeing how failures
-  evolved. *(This identity is insufficient for loop bodies — see OQ-04.)*
+- **INV-17** Identity is `(runId, nodeId, iteration, attempt)`, both 1-based (ADR-0021 §1).
+  Records are **never overwritten** by a retry; each attempt keeps its own record, because
+  evaluation depends on seeing how failures evolved. The four parts exist so that
+  "attempt 2 of iteration 1" and "attempt 1 of iteration 2" are different records rather than
+  a collision — a three-part key silently loses one of them.
 - **INV-18** `claimedOutput` is never authoritative. The control plane validates it against the
   node's declared `outputSchema` before any transition is evaluated (ADR-0004 §9). Only
   `validatedOutput` may be referenced by an edge condition.
@@ -353,10 +371,10 @@ CapabilityGrant, 0..1 ContextBundle reference, 0..* ModelInvocations, 0..* ToolI
 
 ### 5.5 Agent
 
-> **This entity has no contract in the repository today.** ADR-0004 defines the *protocol* for
-> invoking an agent and `docs/architecture/agent-runtime.md` §5 sketches the definition, but
-> there is no schema, no store and no versioning rule. What follows is the minimum coherent
-> contract; OQ-02 asks for the decision that would make it binding.
+> Contract: [`schemas/agent/agent.schema.json`](../../schemas/agent/agent.schema.json),
+> decided by [ADR-0022](../decisions/0022-agent-definition-versioning-and-pinning.md). This entity
+> had no schema, no store and no versioning rule when the specification was first written; that was
+> the most consequential gap it surfaced.
 
 **Responsibility.** Declare a constrained AI execution unit as **configuration, not code**:
 identity, objective, platform-authored instructions, permitted tools, output contract, model
@@ -380,11 +398,17 @@ per NodeRun. Has **no run-scoped state** — the runtime is stateless and freely
 - **INV-23** `toolIds` is a request, intersected with the node's CapabilityGrant. An agent
   definition cannot widen authority.
 - **INV-24** Agents hold no credentials and no durable state.
-- **INV-25** *(Proposed, currently unenforced.)* A GraphRun must pin the agent definition
-  version alongside `graphVersionHash`. **Without this, INV-11 is not achieved**: a graph is
-  pinned but the agent it invokes can change underneath it, so two runs of the "same" pinned
-  definition are not reproducible. See OQ-02 — this is the most consequential gap in this
-  document.
+- **INV-25** A GraphRun pins every agent it may invoke in `agentPins`, resolved once at run
+  creation, alongside `graphVersionHash` (ADR-0022 §3). Without this, INV-11 is not achieved: a
+  graph would be pinned while the agent it invokes changed underneath it, so two runs of the
+  "same" pinned definition would not be reproducible. A run that resumes after a week uses the
+  agent it started with, not the one that exists when it wakes up.
+- **INV-90** An `Agent` document is immutable. `agentVersionHash` is the content hash of the
+  document with that field excluded (ADR-0020 §4), so a published definition cannot be edited
+  without becoming a different definition.
+- **INV-91** A run whose pinned `agentVersionHash` cannot be resolved fails
+  `DEFINITION_UNAVAILABLE`, which is not retryable. Substituting a different version would
+  silently break reproducibility at exactly the moment it matters.
 
 ### 5.6 Tool
 
@@ -420,8 +444,11 @@ runtime.
 
 ### 5.7 ToolRequest
 
-> **No contract exists today.** ADR-0005 §7 defines the *pipeline* and ADR-0004 §11 names the
-> callback endpoint, but the message body is unspecified. OQ-03.
+> Contract: [`schemas/tools/tool-request.schema.json`](../../schemas/tools/tool-request.schema.json).
+> ADR-0005 §7 defines the pipeline and ADR-0004 §11 names the callback endpoint; the message body
+> is now specified. It carries no `runId`, `nodeId`, `iteration` or `attempt`: the subject is
+> derived from `callbackToken` (ADR-0004 §10) and never claimed by the caller, so the runtime
+> cannot widen its own authority by asking differently.
 
 **Responsibility.** Carry one authorization-and-execution request from the agent runtime to the
 control-plane tool layer. It is the **only** channel by which an agent causes an effect.
@@ -461,7 +488,9 @@ ExecutionRequest (workspace tools) or an integration call (Jira/GitHub/Confluenc
 
 ### 5.8 ToolResult
 
-> **No contract exists today.** OQ-03.
+> Contract: [`schemas/tools/tool-result.schema.json`](../../schemas/tools/tool-result.schema.json).
+> `AWAITING_APPROVAL` is a first-class status rather than an error, so the agent is never left to
+> infer the difference between "denied", "broken" and "waiting for a human".
 
 **Responsibility.** Return the outcome of a ToolRequest to the agent loop as **data**.
 
@@ -707,8 +736,11 @@ restarts.
 
 ### 5.16 Workspace
 
-> **The durable record has no contract today.** `WorkspaceSpec` describes creation input only.
-> OQ-05.
+> Contract: [`schemas/execution/workspace.schema.json`](../../schemas/execution/workspace.schema.json).
+> `WorkspaceSpec` remains the creation input; `Workspace` is the durable record the executor must
+> account for afterwards. The layout is `<workspace root>/<repositoryId>/` per ADR-0023 §1, so
+> every workspace-relative path begins with a `repositoryId` and one path rule governs `cwd`,
+> capability scope, artifacts and checkpoints alike.
 
 **Responsibility.** Provide an isolated, reconstructible, credential-free filesystem for one
 GraphRun.
@@ -839,8 +871,12 @@ PR for a head ref — the integration must **prefer detect-and-adopt over blind 
 The acceptance criterion is concrete and testable: *run the same node twice and leave one branch,
 one pull request and one comment.*
 
-> Unresolved: this key is stable across **loop iterations** as well as attempts, so a loop that
-> legitimately wants to post a comment per iteration would silently deduplicate. See OQ-04.
+ADR-0021 §5 fixes the key as `sha256(canonical([runId, nodeId, iteration, toolId,
+canonical(input)]))`. The two choices are deliberate and opposite: `attempt` is **excluded**, so a
+retry of a write that may already have landed produces the same key and is suppressed; `iteration`
+is **included**, so a loop that legitimately posts a comment per round is not silently deduplicated
+into one. `schemas/hashing/vectors.json` pins the key with a cross-language vector, because
+ADR-0021 names getting this wrong as the most likely implementation error in the tool layer.
 
 ### 6.4 Correlation identifiers
 
@@ -895,6 +931,19 @@ Five independent layers must all fail for a prompt injection to reach the outsid
 5. approval is the last gate, and an agent cannot influence its own approval (ADR-0009)
 
 No single layer is sufficient. Removing any one of them makes the others advisory.
+
+Two further invariants govern the scope of a grant across repositories (ADR-0023 §3):
+
+- **INV-89** Every key of `CapabilityGrant.pathScope` names a repository present in
+  `GraphRun.repositories`. A grant cannot be scoped to a repository the run does not have. This is
+  not expressible in JSON Schema — the keys are arbitrary strings whose legality depends on another
+  document — so it is checked when the grant is minted, and a violation is a denial rather than a
+  warning.
+- **INV-92** Workspace-relative paths are **rejected, never normalised** (ADR-0023 §2). A path
+  containing `..`, an absolute path, or one resolving outside its repository directory is refused.
+  Normalising instead of rejecting is how a traversal becomes a silently permitted write to a
+  neighbouring repository: the caller asked for something outside its scope, and answering a
+  different question hides that fact from the audit trail.
 
 ### 6.6 Execution isolation
 
@@ -956,7 +1005,7 @@ asserting it.
 |---|---|---|
 | `TRANSIENT` | yes | |
 | `MODEL_ERROR` | yes | rate limits, provider transients |
-| `BUDGET_EXCEEDED` | policy | retrying without raising the budget usually repeats the failure |
+| `BUDGET_EXCEEDED` | **never** | ADR-0026 §5: exhaustion *suspends* the run rather than failing it, so an operator can raise the ceiling and resume. Retrying a bound that was hit re-hits it. |
 | `INVALID_OUTPUT` | yes, bounded | one repair attempt |
 | `TOOL_DENIED` | policy | usually indicates a wrong grant, not a transient fault |
 | `VERIFICATION_FAILED` | yes | the normal repair-loop case |
@@ -964,8 +1013,10 @@ asserting it.
 | `INTEGRATION_ERROR` | yes | |
 | `INDETERMINATE` | **never** | reconcile or escalate |
 | `CANCELLED` | no | |
-| `APPROVAL_REJECTED` | no | a human said no; retrying is not a repair |
-| `APPROVAL_EXPIRED` | **unresolved** | see OQ-06 |
+| `APPROVAL_REJECTED` | **never** | a human said no; a refusal a policy can retry around is not a refusal |
+| `APPROVAL_REVOKED` | **never** | a human changed their mind, which is also a decision |
+| `APPROVAL_EXPIRED` | by policy | ADR-0025 §2: nobody decided anything. Retry means **re-request the same subject**, never re-execute the node — re-execution could change what is being approved. Bounded by the attempt budget and by `GraphRun.approvalDeadline`. |
+| `DEFINITION_UNAVAILABLE` | **never** | ADR-0022: substituting another version would break reproducibility exactly when it matters |
 
 Policy lives in the Graph (versioned, pinned); state lives on the NodeRun (`attempt`,
 `nextAttemptAt`, `lastFailureCategory`). Each attempt keeps its own record.
@@ -1031,13 +1082,13 @@ Two consequences worth stating because they are easy to miss:
   may span a run and its registry record. Registry lookups are reads, resolved into the grant at
   mint time and recorded by `configHash`.
 - An `audit` container partitioned by `runId` cannot answer "everything this developer did last
-  month" without a cross-partition query. V1 answers it by export instead. (OQ-08.)
+  month" without a cross-partition query. V1 answers it by export instead.
 
 ---
 
 ## 8. Invariant traceability
 
-The 88 invariants in §5 are the testable form of the ADRs. Grouped by where they must be
+The 92 invariants in §5 and §6 are the testable form of the ADRs. Grouped by where they must be
 enforced:
 
 | Enforced in | Invariants | Test approach |
@@ -1048,8 +1099,9 @@ enforced:
 | Model gateway | INV-47..57, INV-87..88 | two-provider conformance suite against one recorded scenario |
 | Executor | INV-58..68, INV-79..86 | executor contract suite + remote-simulation mode |
 | Context engine | INV-41..46 | provenance completeness assertions |
-| Approval component | INV-73..78 | subject-mutation and expiry tests |
-| **Unenforceable today** | INV-22..25 | no Agent contract exists — see OQ-02 |
+| Approval component | INV-73..78 | subject-mutation and expiry tests; re-request preserves `subjectHash` |
+| Agent registry | INV-22..25, INV-90..91 | publication rejects a mutated definition; pin resolution is exercised across a suspend/resume |
+| Grant minting | INV-89, INV-92 | a `pathScope` key naming a repository absent from the run is refused; traversal and absolute paths are rejected rather than normalised |
 
 Three mechanisms deserve particular emphasis because they are self-enforcing rather than
 review-dependent:
@@ -1100,181 +1152,80 @@ attributed or correlated does not solve the problem:
 All three are covered by examples under `schemas/examples/`, and each was verified by mutation:
 removing any one of them makes the example suite fail.
 
-### DEF-02 — `pathScope` is ambiguous in multi-repository runs
+### DEF-02 — `pathScope` was ambiguous in multi-repository runs
 
-**Severity: Medium. Open — resolve with OQ-07, which requires an ADR.**
+**Severity: Medium. Resolved by [ADR-0023](../decisions/0023-multi-repository-workspace-layout.md).**
 
 `GraphRun.repositories[]` and `WorkspaceSpec.repositories[]` are both lists, but
-`CapabilityGrant.pathScope` is a flat set of globs over a single workspace-relative namespace.
-With two repositories materialised into one workspace, `src/**` is ambiguous, and a grant intended
-to permit writes in one repository silently permits them in the other.
+`CapabilityGrant.pathScope` was a flat set of globs over a single workspace-relative namespace.
+With two repositories materialised into one workspace, `src/**` was ambiguous, and a grant intended
+to permit writes in one repository silently permitted them in the other.
 
-**Correction, not yet applied.** The fix is to define the workspace layout — the natural choice is
-a `<repositoryId>/` prefix per repository — and require `pathScope` globs to be rooted at it.
+**Correction applied.** ADR-0023 §1 defines the layout as `<workspace root>/<repositoryId>/`, and
+§3 makes `pathScope` a **map keyed by `repositoryId`** rather than a flat list:
 
-This was originally classified as a pure correction. That was wrong: the layout it depends on is
-not implied by any accepted ADR, and choosing one here would be inventing the answer to OQ-07
-rather than recording it. It is left open deliberately, and should be fixed in the same change
-that resolves OQ-07.
+```json
+"pathScope": { "repo_orderservice": ["src/**", "pom.xml"] }
+```
+
+The map shape is what closes the defect, rather than a convention about how globs should be
+written. A flat list of `repo_orderservice/src/**` patterns would have been equally correct and
+equally easy to get wrong once; a grant that names no repository cannot express a path in it, so
+cross-repository leakage is unrepresentable rather than merely discouraged.
+
+The residual risk is that the map's keys could name a repository the run does not have. That is
+not expressible in JSON Schema and is carried by INV-89 (§8), checked when the grant is minted.
 
 ---
 
 ## 10. Open questions requiring an architectural decision
 
-These were **not** invented away. Each changes the data model or a security boundary, so each
-needs a decision before implementation.
+This document originally raised eleven questions it could not answer without inventing
+architecture. Ten have been decided. Each produced an ADR, and each ADR changed at least one
+schema — which is the evidence that they were real questions rather than documentation tidying.
 
-### OQ-01 — Domain vocabulary: which names win? *(Low risk, high friction if deferred)*
+| # | Question | Resolution |
+|---|---|---|
+| OQ-01 | Domain vocabulary: which names win? | [ADR-0019](../decisions/0019-canonical-domain-vocabulary.md) — the sixteen names in §2; nine retired, `doclint`-enforced |
+| OQ-02 | Agent definition, storage and pinning | [ADR-0022](../decisions/0022-agent-definition-versioning-and-pinning.md) — immutable, content-addressed, pinned once per run in `GraphRun.agentPins` |
+| OQ-03 | `ToolRequest` / `ToolResult` wire contract | Schemas now exist; the subject is derived from `callbackToken` per ADR-0004 §10, never claimed by the caller |
+| OQ-04 | Loop iteration identity | [ADR-0021](../decisions/0021-noderun-identity-iteration-and-attempt.md) — the four-part key `(runId, nodeId, iteration, attempt)` |
+| OQ-05 | `Workspace` as a durable entity | `workspace.schema.json` now exists, with the §5.16 state machine, derived from ADR-0003 and ADR-0006 |
+| OQ-06 | Is `APPROVAL_EXPIRED` retryable? | [ADR-0025](../decisions/0025-approval-expiry-and-re-request.md) — yes by policy, and retry means *re-request the same subject* |
+| OQ-07 | Multi-repository workspace layout (and DEF-02) | [ADR-0023](../decisions/0023-multi-repository-workspace-layout.md) — `<workspace>/<repositoryId>/`; `pathScope` keyed by repository |
+| OQ-08 | Cost units and budget aggregation | [ADR-0026](../decisions/0026-cost-units-and-budget-enforcement.md) — integer micro-units of an ISO 4217 currency; a mandatory run-level ceiling |
+| OQ-09 | Canonical serialisation for cross-language hashing | [ADR-0020](../decisions/0020-canonical-serialisation-and-hashing.md) — RFC 8785 JCS, SHA-256, integers only, with cross-language vectors |
+| OQ-10 | Mid-loop context retrieval | [ADR-0027](../decisions/0027-mid-loop-context-retrieval.md) — a `READ` tool that supersedes the bundle, so provenance stays complete |
 
-The ADRs say `GraphDefinition` / `Run` / `NodeExecution`; the domain language here says `Graph` /
-`GraphRun` / `NodeRun`. Both are defensible. What is not defensible is shipping both, which is
-where the Java and Python sides start naming the same thing differently.
-
-*Recommendation:* adopt the domain names (`Graph`, `GraphRun`, `GraphNode`, `NodeRun`) and rename
-the schemas now, while renaming is free. **Affects V1. ADR not strictly required — a recorded
-decision in this document would suffice.**
-
-### OQ-02 — Agent definition: contract, storage and pinning *(the most consequential gap)*
-
-There is no Agent schema, no store and no versioning rule. The critical consequence:
-
-> A GraphRun pins `graphVersionHash`, but the agent definitions that graph invokes are **not**
-> pinned. Editing an agent's instructions changes the behaviour of every in-flight run of an
-> already-pinned graph, and makes two runs of the "same" definition non-comparable.
-
-This defeats INV-11 and undermines the reproducibility that ADR-0008 §2 and the whole evaluation
-strategy depend on.
-
-Options: (a) pin agent versions in the Graph definition, so the graph hash covers them
-transitively; (b) resolve agents at run creation and record the resolved set on the GraphRun;
-(c) treat agent definitions as content-addressed like graphs and reference by hash.
-
-*Recommendation:* (c), with (a) as the reference mechanism — it is consistent with how graphs
-already work and needs no new concept. **Affects V1. ADR required.**
-
-### OQ-03 — ToolRequest / ToolResult wire contract *(blocks the tool layer)*
-
-§5.7 and §5.8 propose shapes; nothing in the ADRs fixes them. Specific undecided points:
-
-- Is a denial an HTTP 200 with `outcome: DENIED`? ADR-0005 §6 says a denial is a result rather
-  than a transport error, which implies yes — but it is inferred, not stated.
-- Does the request carry the provider's `toolCallId`? It must, to correlate the result back into
-  the conversation, but nothing says so.
-- Does a suspended-for-approval invocation hold the HTTP call open, or return a
-  `PENDING_APPROVAL` result and end the attempt? These have very different runtime consequences,
-  and approvals can take days.
-
-*Recommendation:* end the attempt on approval suspension. Holding a connection open for days
-contradicts the durable-pause model. **Affects V1. ADR required** — the third point is a
-semantic decision, not a detail.
-
-### OQ-04 — Loop iteration identity *(data-model change)*
-
-`NodeRun` identity is `(runId, nodeId, attempt)`. A `loop` node executes its body repeatedly, so a
-body node executed five times, each with its own retries, **collides**: iteration 2 attempt 1 is
-indistinguishable from iteration 1 attempt 2.
-
-This also affects idempotency (§6.3): the key excludes `attempt` but has no notion of iteration,
-so a tool call with identical input in two iterations deduplicates — which may be right for
-"create the PR" and wrong for "post a progress comment".
-
-Options: add `iteration` to NodeRun identity; or flatten loops at publication into distinct
-`nodeId`s; or forbid side-effecting tools inside loop bodies.
-
-*Recommendation:* add `iteration` to the identity tuple and to the idempotency key, defaulting to
-0. Flattening looks tempting but destroys the readability of the definition that ADR-0008 §1
-exists to protect. **Affects V1. ADR required.**
-
-### OQ-05 — Workspace as a durable entity *(recovery correctness)*
-
-Only `WorkspaceSpec` exists. Undecided: the state machine, whether the record is durable at all,
-who reclaims an expired lease, how quarantine retention is bounded, and how LRU eviction
-interacts with a `SUSPENDED` run that will need its workspace back.
-
-The interaction is the real question. Because of INV-70 a workspace can always be rebuilt, so
-eviction is *safe* — but rebuilding a large repository on resume is slow enough that a developer
-will notice, and "safe but surprising" is how local-first platforms lose users.
-
-*Recommendation:* make Workspace durable with the §5.16 state machine; never evict a workspace
-belonging to a non-terminal run without an explicit operator action. **Affects V1. ADR required.**
-
-### OQ-06 — Is `APPROVAL_EXPIRED` retryable?
-
-`APPROVAL_REJECTED` is clearly terminal for the node — a human said no. `APPROVAL_EXPIRED` is
-different: nobody decided anything, the clock simply ran out, which on a local-first platform is
-the *expected* outcome of a holiday.
-
-The current graph-definition schema permits neither in `retryableCategories`, which means an
-expired approval permanently fails a run that a developer would reasonably expect to be able to
-re-request.
-
-*Recommendation:* make `APPROVAL_EXPIRED` retryable by policy, where a retry means *re-request
-the approval* with a fresh `subjectHash` verification — not silently proceeding. **Affects V1.
-ADR required**, because "retry" meaning "ask again" is a genuinely different operation from
-"retry" meaning "run again".
-
-### OQ-07 — Multi-repository workspace layout *(also DEF-02)*
-
-`repositories[]` is plural everywhere, but no document states how multiple repositories are laid
-out in one workspace, how `cwd` is rooted, how `pathScope` is qualified, or how a patch series is
-attributed per repository at checkpoint time.
-
-Cross-repository change is an explicit platform goal, so this cannot be deferred to "when we need
-it" — the checkpoint format depends on it.
-
-*Recommendation:* `<repositoryId>/` prefix; `pathScope` globs rooted at the workspace; patch
-series already per-repository in the Checkpoint schema, which is consistent with this.
-**Affects V1. ADR required.**
-
-### OQ-08 — Cost units and budget aggregation
-
-`maxCostUnits` appears on grants, node budgets and registry ceilings, but "cost unit" is never
-defined, while `ModelResponse.cost` is `{amount, currency}`. Undecided: are cost units currency,
-normalised tokens, or provider-neutral credits? And who enforces a **run-level** total, given
-budgets are declared per node and per grant?
-
-Without a run-level ceiling, a bounded loop of bounded nodes is still an unbounded spend.
-
-*Recommendation:* cost units are currency-denominated with an explicit currency; add a run-level
-budget enforced by the graph engine before each node dispatch. **Affects V1. ADR required.**
-
-### OQ-09 — Canonical serialisation for cross-language hashing
-
-`graphVersionHash`, `bundleRef`, `subjectHash` and the audit hash chain all require Java and
-Python to produce **byte-identical** canonical JSON. Key ordering, number formatting, Unicode
-normalisation and escaping all differ between ecosystems by default.
-
-A mismatch means approvals spuriously void themselves on resume and audit chains fail to verify —
-symptoms that would be very hard to attribute to their cause.
-
-*Recommendation:* adopt a published canonicalisation (RFC 8785 JCS) rather than defining one, and
-make a cross-language conformance vector part of the schema test suite. **Affects V1. ADR
-required.**
-
-### OQ-10 — Mid-loop context retrieval
-
-An agent receives one ContextBundle and can fetch it by reference. There is no way to retrieve
-*more* context mid-loop. But the context principles call for progressive disclosure, and an agent
-that discovers it needs an unincluded file can currently only fail the node.
-
-The natural resolution is a `READ`-class `context.search` tool, which would route retrieval
-through the choke point and keep it audited — but it would also mean bundles are no longer the
-complete record of what the agent saw, which weakens INV-41 and the evaluation story.
-
-*Recommendation:* allow it as a `READ` tool, and require that anything it returns is appended to a
-superseding bundle so the provenance record stays complete. **Affects V1. ADR required.**
-
-### OQ-11 — Reconciliation procedure per integration
+### OQ-11 — Reconciliation procedure per integration *(still open)*
 
 ADR-0008 requires that `INDETERMINATE` be resolvable, and ADR-0005 makes it reachable, but no
 document defines *how* to reconcile for GitHub, Jira or Confluence — which query proves a branch,
-PR, comment or page version was or was not created.
+pull request, comment or page version was or was not created.
 
 An enum value with no operational procedure behind it is how `INDETERMINATE` becomes a state that
 silently accumulates.
 
-*Recommendation:* one reconciliation procedure per write tool, defined alongside the tool and
-covered by the tool's contract tests. **Affects V1. ADR not required if documented per tool.**
+**Why it stays open.** It needs one procedure per write tool, written alongside that tool, and no
+write tool exists yet. Deciding it now would produce a procedure for a query nobody has run against
+an API nobody has integrated. ADR-0011 already records that this is documented per tool rather than
+by a single ADR.
+
+**What it blocks.** External-write tools, which are M5 and later. It does not block the walking
+skeleton, whose tools are `READ` and `WORKSPACE_WRITE` only, and it does not change any contract
+in this document — `INDETERMINATE` already exists as a failure category and is already excluded
+from `retryableCategories`.
+
+**Requirement on M5.** No external-write tool ships without its reconciliation procedure and a
+contract test that exercises it. A tool that can reach `INDETERMINATE` and cannot get out of it is
+incomplete, not merely undocumented.
+
+### Deferred beyond V1
+
+Two evaluation questions are recorded in
+[`docs/architecture/evaluation.md`](../architecture/evaluation.md) §9 — where evaluation results
+are stored and what the benchmark corpus contains. Neither changes a V1 contract, and both depend
+on volumes nobody has measured. They must be resolved before the first evaluation runs.
 
 ---
 
@@ -1298,14 +1249,29 @@ Recorded so that absence reads as a decision rather than an oversight:
 ## 12. Consequences of adopting this specification
 
 **Accepted costs.** The invariant set is large, and much of it is only enforceable by tests that
-must be written before the components they constrain. Three entities need contracts that do not
-exist yet, and two of the open questions change the data model — so accepting this document
-implies accepting a short ADR round before implementation rather than after.
+must be written before the components they constrain. That cost is now committed rather than
+estimated: the ADR round this document called for produced nine decisions, every one of which
+changed at least one schema.
 
-**Gained.** The contracts become independently testable, the Java and Python sides can be built
-against the same specification without a shared codebase, and the questions that would otherwise
-have been settled silently and differently on each side are now visible and decidable.
+**Gained.** The contracts are independently testable, and the Java and Python sides can be built
+against the same specification without a shared codebase — not by convention but mechanically.
+The schemas generate models for both languages, and a cross-language conformance check verifies
+that the generated types, their required fields, their enum values and their canonical hashes
+agree. The questions that would otherwise have been settled silently and differently on each side
+were made visible and then decided.
 
-**Next.** Resolve OQ-02, OQ-03, OQ-04 and OQ-09 first: they change contracts that everything else
-is built on. OQ-05, OQ-06, OQ-07 and OQ-08 can be decided in parallel. OQ-01 costs almost nothing
-now and progressively more later.
+**What enforces this document.** Consistency is checked in CI rather than in review:
+
+| Mechanism | What it prevents |
+|---|---|
+| `doclint` | retired vocabulary, broken cross-references, ADRs referencing decisions that do not exist |
+| `schemalint` | schema drift, unvalidated examples, floats reaching a hashed document |
+| `codegen --check` | generated models diverging from the schemas they came from |
+| `contract_test` | Java and Python disagreeing about a contract, or about a hash |
+
+Prose consistency degrades within weeks under normal contribution. These checks are what make
+the decisions in this document survive contact with the repository.
+
+**Next.** The contracts are frozen for M3. The remaining open question (OQ-11) concerns
+external-write tools and is due at M5. Two evaluation questions are deferred to M7 and recorded in
+[`docs/architecture/evaluation.md`](../architecture/evaluation.md) §9.

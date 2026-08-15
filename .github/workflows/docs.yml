@@ -41,3 +41,46 @@ jobs:
 
       - name: Check contract schemas
         run: python3 .github/scripts/schemalint.py
+
+  codegen:
+    name: Generated models are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # ADR-0024 §3 commits generated code and has CI prove it regenerates identically.
+      # Reviewing a contract change means seeing its effect on both languages in the same
+      # diff; the cost is this check, which fails when someone edits generated code by hand.
+      - name: Verify generated models match the schemas
+        run: python3 .github/scripts/codegen.py --check
+
+  contracts:
+    name: Cross-language contract conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Java and Python are generated from one source, but "generated from the same file" is
+      # not the same claim as "agree". This check compares the schemas, the Java types by
+      # reflection and the Python types by introspection — three-way, because a two-way check
+      # would only prove the generator agrees with itself. It also verifies that both
+      # languages reproduce the canonical hashing vectors from independent implementations.
+      #
+      # Everything runs offline: no Azure, no Cosmos DB, no container registry, no model
+      # provider. A contract check that needs credentials is a contract check that gets
+      # skipped.
+      - name: Run cross-language contract conformance
+        run: python3 .github/scripts/contract_test.py

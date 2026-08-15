@@ -1,5 +1,10 @@
 # AI Engineering Platform — Evaluation
 
+> The V1 evaluation **architecture** — what execution must already record for any of this to be
+> computable — is in
+> [docs/architecture/evaluation.md](docs/architecture/evaluation.md). This document states what
+> the platform should eventually measure; that one states what must be durable before it can.
+
 ## Purpose
 
 The platform must evaluate the engineering harness, not merely individual models.
