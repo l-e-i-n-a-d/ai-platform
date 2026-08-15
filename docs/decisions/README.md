@@ -59,8 +59,8 @@ is taken.
 | 0013 | [Context bundle contract, budgets and provenance](0013-context-bundle-contract.md) | **Accepted** |
 | 0014 | [Repository registry and instruction precedence](0014-repository-registry-and-instruction-precedence.md) | **Accepted** |
 | 0015 | [Telemetry contracts, correlation and collection model](0015-telemetry-contracts-and-collection-model.md) | **Accepted** |
-| 0016 | Audit model and attribution limits without central identity | Planned |
-| 0017 | Artifact classification, retention and redaction | Planned |
+| 0016 | [Audit model and attribution limits without central identity](0016-audit-model-and-attribution-limits.md) | **Accepted** |
+| 0017 | [Artifact classification, retention and redaction](0017-artifact-classification-retention-and-redaction.md) | **Accepted** |
 | 0018 | [Developer entry surface: CLI in V1, UI deferred](0018-developer-entry-surface-cli.md) | **Accepted** |
 
 Deferred questions, documented but not yet decided: eventing mechanism; Kubernetes executor;

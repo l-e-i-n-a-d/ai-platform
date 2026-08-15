@@ -42,6 +42,10 @@ aip run show <id> --grants | --audit | --artifacts
 
 aip repo list | show <id> | validate
 aip graph list | show <id> | validate <file>
+
+aip audit export <run-id>              self-consistent bundle; states its assurance tier
+aip artifacts prune [--dry-run]        reference-aware, never removes what a live run needs
+aip artifacts export <ref>             warns for SENSITIVE; the act is recorded
 ```
 
 `aip up` starts and supervises both processes and verifies the container runtime — one command,

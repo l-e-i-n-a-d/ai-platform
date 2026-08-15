@@ -744,6 +744,24 @@ Never:
 
 Every meaningful consequential action should be attributable to a user, run, agent, graph and tool.
 
+**Attribution has honest limits, and they must be stated rather than glossed over (ADR-0016).** Without central identity, the acting "user" is a self-asserted local OS username. Four of the five identifiers are platform-controlled and reliable; the fifth is not.
+
+Audit is therefore tiered, and the tier is recorded on every entry:
+
+- `SELF_ASSERTED` — local OS user; no assurance against a motivated insider
+- `PLATFORM_ATTESTED` — run, node, grant, graph version, hashes; strong for reconstruction, forgeable by whoever controls the machine
+- `EXTERNALLY_VERIFIABLE` — GitHub App action, commit, PR, Jira transition; verifiable independently of the platform
+
+**V1 audit is developer-attested.** It supports debugging, reconstruction and personal accountability. It is NOT adversarial-grade. Never write a document, report or dashboard that implies otherwise — a control believed to be strong is more dangerous than one known to be weak.
+
+Audit is separate from telemetry. Telemetry may be sampled, dropped or expired; audit is complete, append-only, and written on the critical path — if it cannot be written, the action does not happen. Never satisfy an audit requirement with a log line.
+
+Audit what is consequential: `EXTERNAL_WRITE` and `IRREVERSIBLE` invocations, capability grants and every **denial**, approval decisions, run transitions, external writes, registry changes, escape-hatch use, redaction failures. Do not audit reads — burying the consequential records is its own way of losing them.
+
+Anchor high-consequence actions in systems that have real identity: run ids in commits, PR bodies and Jira comments. The platform does not build identity it does not have; it borrows identity from systems that do.
+
+Artifacts — transcripts, prompts, completions, diffs, context bundles, CI logs — are classified at write time, default to `SENSITIVE`, are redacted **before** persistence, and are retained by tier bounded by run state rather than wall-clock age alone (ADR-0017). Never delete an artifact a resumable run depends on.
+
 ---
 
 # 19. Human Approval

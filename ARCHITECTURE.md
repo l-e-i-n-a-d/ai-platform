@@ -361,7 +361,19 @@ external attestation borrowed from GitHub or Jira. See
 [ADR-0009](docs/decisions/0009-human-approval-model.md) and
 [docs/architecture/approvals.md](docs/architecture/approvals.md).
 
-If the platform becomes a centrally hosted multi-user service, authentication and authorization must be revisited as an explicit architectural decision.
+Audit is separate from telemetry and written on the critical path of consequential actions, with
+an explicitly recorded assurance tier. **V1 audit is developer-attested**: strong for
+reconstruction and personal accountability, not adversarial-grade, because without central
+identity the acting user is self-asserted. High-consequence actions are anchored in GitHub and
+Jira, which do have identity. See
+[ADR-0016](docs/decisions/0016-audit-model-and-attribution-limits.md) and
+[docs/architecture/audit.md](docs/architecture/audit.md).
+
+Artifacts — transcripts, diffs, context bundles, CI logs — are classified at write time,
+redacted before persistence, and retained by tier bounded by run state. See
+[ADR-0017](docs/decisions/0017-artifact-classification-retention-and-redaction.md).
+
+If the platform becomes a centrally hosted multi-user service, authentication and authorization must be revisited as an explicit architectural decision — and that decision is what adversarial-grade audit requires.
 
 ---
 

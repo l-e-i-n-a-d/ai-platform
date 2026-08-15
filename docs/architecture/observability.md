@@ -104,6 +104,9 @@ platform_tool_denied_total{tool, reason}
 platform_execution_duration_seconds{tool_kind, outcome}
 platform_egress_denied_total{destination_class}
 platform_redactions_total{source_class}
+platform_audit_write_failures_total{action_class}
+platform_artifact_bytes{tier}
+platform_artifacts_pruned_total{tier}
 platform_approval_wait_seconds{graph_id}
 platform_workspace_bytes{repository_id}
 ```
@@ -158,6 +161,10 @@ confidence in the evaluation itself.
 ## 8. Telemetry is not audit
 
 Telemetry may be sampled, dropped, disabled or expired. The audit trail may not. Audit records
-are durable, unsampled and retained independently (ADR-0016).
+are durable, unsampled, append-only and retained independently (ADR-0016).
+
+`platform_audit_write_failures_total` is the metric to alert on first: an audit write failure
+means a consequential action was blocked, and if it is *not* being blocked, something is wrong
+with the fail-closed path.
 
 Never satisfy an audit requirement with a log line.

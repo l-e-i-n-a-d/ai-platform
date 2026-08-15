@@ -196,6 +196,14 @@ Never expose secrets unnecessarily to models.
 
 Consequential operations may require human approval.
 
+Audit is not telemetry. It is complete, append-only, and written on the critical path — if the
+audit record cannot be written, the action does not happen. Every entry records its assurance
+tier, and **V1 audit is developer-attested, not adversarial-grade** (ADR-0016). Never write
+anything implying otherwise.
+
+Artifacts are classified at write time, redacted **before** persistence, and retained by tier
+bounded by run state — never delete an artifact a resumable run depends on (ADR-0017).
+
 ---
 
 ## Development Style

@@ -206,7 +206,61 @@ borrows identity from a system that has it.
 
 ---
 
-## 7. Future Hosted Deployment
+## 7. Audit
+
+Audit is **not** telemetry. Telemetry may be sampled, dropped or expired; the audit record is
+complete, append-only and written on the critical path — if it cannot be written, the action does
+not happen. Never satisfy an audit requirement with a log line.
+
+Audited: `EXTERNAL_WRITE` and `IRREVERSIBLE` tool invocations, capability grants and every
+**denial**, all approval decisions, run state transitions, external writes, registry and
+trust-level changes, every escape-hatch use, and redaction failures.
+
+### Assurance tiers
+
+Every entry records which tier it belongs to, and they are never presented as equivalent:
+
+| Tier | Assurance |
+|---|---|
+| `SELF_ASSERTED` | local OS user; none against a motivated insider |
+| `PLATFORM_ATTESTED` | strong for reconstruction; forgeable by whoever controls the machine |
+| `EXTERNALLY_VERIFIABLE` | GitHub/Jira evidence; verifiable independently of the platform |
+
+**V1 audit is developer-attested.** It is suitable for debugging, reconstruction and personal
+accountability. It is **not** adversarial-grade, and no report may imply otherwise. An audit
+trail its subjects can forge is not an audit trail, and a team that knows the limit can decide
+when it matters.
+
+Entries form a hash chain, which is tamper-**evident**, not tamper-proof: it makes silent
+selective deletion impractical, nothing more.
+
+High-consequence actions are anchored externally — run ids in commits, PR bodies and Jira
+comments — so the platform's record is checkable against systems whose logs its subject cannot
+rewrite.
+
+See [ADR-0016](docs/decisions/0016-audit-model-and-attribution-limits.md).
+
+---
+
+## 8. Artifacts
+
+Transcripts, prompts, completions, diffs, context bundles and CI logs are classified at write
+time and default to `SENSITIVE`. They are redacted **before** persistence, retained by tier, and
+deleted only when no live run, audit entry or retained evaluation references them.
+
+Exporting or sharing an artifact is an explicit, recorded action, and `SENSITIVE` artifacts warn
+first. The realistic disclosure path in a local-first platform is not an attacker — it is a
+developer pasting a transcript into an issue to ask for help.
+
+Encryption at rest is delegated to operating-system full-disk encryption. This is a stated
+limitation, not an omission: an application-layer key stored beside the data on the same laptop
+would add complexity and no meaningful protection.
+
+See [ADR-0017](docs/decisions/0017-artifact-classification-retention-and-redaction.md).
+
+---
+
+## 9. Future Hosted Deployment
 
 If the platform becomes a centrally hosted multi-user service, revisit:
 
@@ -215,6 +269,8 @@ If the platform becomes a centrally hosted multi-user service, revisit:
 - tenancy
 - identity
 - secret management
+- **adversarial-grade audit**, which requires authenticated identity, a store the subject cannot
+  write directly, and signing or an append-only service
 
 This must be an explicit architectural decision.
 

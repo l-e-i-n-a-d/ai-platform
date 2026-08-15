@@ -104,6 +104,12 @@ Traces, metrics and logs. May be sampled, dropped or disabled — which is preci
 
 The durable, unsampled record of consequential platform actions, retained independently of telemetry.
 
+Every entry records an assurance tier — `SELF_ASSERTED`, `PLATFORM_ATTESTED` or `EXTERNALLY_VERIFIABLE`. V1 audit is **developer-attested**: strong for reconstruction, not adversarial-grade.
+
+## Artifact Classification
+
+The type, sensitivity, provenance and retention tier assigned to an artifact at the moment it is written. Classifying later is guesswork.
+
 ## System of Record
 
 The authoritative external system for a particular type of information.

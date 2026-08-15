@@ -239,18 +239,54 @@ advancing the same run and producing duplicated external side effects.
 
 ## 6. Artifact store (V1)
 
-Content-addressed on the local filesystem:
+Content-addressed on the local filesystem, with a logical index:
 
 ```text
-~/.ai-platform/artifacts/<sha256[0:2]>/<sha256>
+content:  ~/.ai-platform/artifacts/<sha256[0:2]>/<sha256>
+index:    <runId>/<nodeId>/<artifactType>/<invocationId> -> sha256
 ```
 
 Content addressing gives deduplication and integrity verification, and makes artifact
 references stable and immutable — which is what allows context bundles and checkpoints to be
-replayed for evaluation.
+replayed for evaluation. The index makes "everything this run produced" answerable without
+scanning.
 
-Artifacts must pass the redaction pipeline before being written. Retention is by artifact
-type; audit-relevant artifacts are immutable.
+### Pointer contract
+
+```text
+ArtifactRef {
+  uri, sha256, sizeBytes, contentType, encoding,
+  classification { artifactType, sensitivity, provenance, redacted, retentionTier },
+  createdAt, expiresAt
+}
+```
+
+Payloads above **100 KB** are offloaded here and replaced inline by a ref.
+
+### Classification and retention
+
+Every artifact is classified **at write time** by the component producing it; classifying later
+is guesswork. `sensitivity` defaults to `INTERNAL` and is only ever raised by a contributing
+input.
+
+| Tier | Artifacts | Default |
+|---|---|---|
+| `EPHEMERAL` | tool output, successful build logs | 7 days |
+| `RUN_LIFECYCLE` | transcripts, prompts, completions, context bundles, CI logs | 30 days **or until the run is terminal, whichever is later** |
+| `REPRODUCIBILITY` | patch series, evaluation inputs/outputs, replay cassettes | 180 days |
+| `AUDIT` | audit exports, approval renderings, audit-referenced artifacts | 400 days, immutable |
+
+Retention is bounded by **run state**, not wall-clock age alone. A run paused six weeks awaiting
+approval must still resume, so deleting an artifact a live run depends on would convert a
+resumable run into an unrecoverable one — which is exactly what a naive time-based sweep does.
+
+Deletion is reference-aware (no live run, audit entry or retained evaluation may reference the
+artifact) and is recorded. A store that silently loses data cannot be debugged.
+
+Artifacts must pass the redaction pipeline **before** being written, not on display. Redaction
+is fail-closed on error.
+
+See [ADR-0017](../decisions/0017-artifact-classification-retention-and-redaction.md).
 
 ---
 
