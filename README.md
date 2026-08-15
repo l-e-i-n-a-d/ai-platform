@@ -23,6 +23,12 @@ V1 runs entirely on a developer's machine and needs no cloud account. It does re
 - a container runtime (Docker or Podman) — every repository command runs in a container
 - Java and Python toolchains for the control plane and agent runtime
 - credentials for GitHub, Jira, Confluence and at least one model provider, held locally
+- a GitHub App installed for the repositories the platform will act on — the platform acts as
+  the App, never as your personal token (ADR-0012)
+
+Model provider credentials are **per developer** and are read from the OS keychain, not from
+`.env` files or environment variables (ADR-0011). Jira, Confluence and GitHub *retrieval* uses
+your own credentials, so the platform can never read more than you can.
 
 Node is **not** a V1 prerequisite: the entry surface is a CLI, and the Angular UI is deferred.
 

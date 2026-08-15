@@ -70,6 +70,33 @@ Prefer short-lived credentials where possible.
 
 Azure Key Vault may be introduced when centralized secret management becomes necessary.
 
+### Model provider credentials
+
+Per developer, held in the **OS keychain** — macOS Keychain, Windows Credential Manager, or the
+Linux Secret Service. Not `.env` files, which get committed. Not environment variables, which
+are inherited by child processes and appear in process listings.
+
+Read by the control plane and used only by the model gateway's provider adapters. Never passed
+to the agent runtime, never in a workspace container, never in a command environment, never
+logged. Code executed on behalf of a model must not be able to steal the means to call one.
+
+A broadly shared organisational key is not the V1 default: distributed across laptops it cannot
+be rotated cleanly and makes spend unattributable.
+
+### Egress redaction
+
+"Do not put secrets into prompts" is not achievable by intent, because context is
+machine-assembled from repositories, CI logs, Jira and Confluence — all of which routinely
+contain credentials.
+
+The model gateway is therefore the **mandatory egress choke point**, with credential-pattern
+matching, entropy heuristics and configured deny-lists applied to every outbound request and to
+every persisted invocation record. Redaction matches are recorded as security telemetry and the
+request proceeds; a redaction *failure* blocks egress, because a control that degrades silently
+is not a control.
+
+See [ADR-0011](docs/decisions/0011-model-credentials-cost-and-egress-redaction.md).
+
 ---
 
 ## 4. Repository Boundaries
@@ -79,6 +106,24 @@ Agents must only access repositories required for their task.
 Cross-repository access should be explicit.
 
 Repository content must be treated as untrusted input.
+
+### GitHub actor identity
+
+The platform acts as a **GitHub App**, installed per repository, minting short-lived
+installation tokens per run. Not a developer PAT — that would make agent work indistinguishable
+from human work and carry far broader scope than any task needs.
+
+The App is explicitly denied merge, branch-protection bypass, deployment approval, repository
+administration and secret-management permissions. The platform opens pull requests; humans merge
+them. A control the platform could lift is not a control.
+
+Action identity is not retrieval identity: the App acts, while context retrieval authenticates
+as the developer. Reading through the App would restore the permission amplification the context
+model exists to prevent.
+
+Tokens never enter a workspace, and `git push` never runs inside one.
+
+See [ADR-0012](docs/decisions/0012-github-actor-identity-and-write-back.md).
 
 ---
 

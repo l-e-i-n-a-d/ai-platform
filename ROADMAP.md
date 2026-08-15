@@ -33,6 +33,9 @@ Goals:
 - repository registry and capability ceilings (see ADR-0014)
 - context bundles with budgets, pinning and provenance (see ADR-0013)
 - OpenTelemetry instrumentation, trace propagation and structured logs (see ADR-0015)
+- model gateway with canonical interface, budgets, egress redaction and record/replay
+  (see ADR-0010, ADR-0011)
+- GitHub App identity with per-run installation tokens (see ADR-0012)
 - basic Jira integration
 - basic Confluence integration
 - basic GitHub integration

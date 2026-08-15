@@ -53,9 +53,9 @@ is taken.
 | [0007](0007-operational-persistence-and-local-first-storage.md) | Operational persistence and local-first storage | **Accepted** |
 | 0008 | [Graph execution semantics, versioning and durability](0008-graph-execution-semantics-and-durability.md) | **Accepted** |
 | 0009 | [Human approval model and authorization without central identity](0009-human-approval-model.md) | **Accepted** |
-| 0010 | Model gateway interface and provider neutrality | Planned |
-| 0011 | Model credential management and cost control | Planned |
-| 0012 | GitHub actor identity and repository access scoping | Planned |
+| 0010 | [Model gateway interface and provider neutrality](0010-model-gateway-interface.md) | **Accepted** |
+| 0011 | [Model credentials, cost control and egress redaction](0011-model-credentials-cost-and-egress-redaction.md) | **Accepted** |
+| 0012 | [GitHub actor identity and write-back semantics](0012-github-actor-identity-and-write-back.md) | **Accepted** |
 | 0013 | [Context bundle contract, budgets and provenance](0013-context-bundle-contract.md) | **Accepted** |
 | 0014 | [Repository registry and instruction precedence](0014-repository-registry-and-instruction-precedence.md) | **Accepted** |
 | 0015 | [Telemetry contracts, correlation and collection model](0015-telemetry-contracts-and-collection-model.md) | **Accepted** |

@@ -103,6 +103,7 @@ platform_tool_invocations_total{tool, side_effect_class, outcome}
 platform_tool_denied_total{tool, reason}
 platform_execution_duration_seconds{tool_kind, outcome}
 platform_egress_denied_total{destination_class}
+platform_redactions_total{source_class}
 platform_approval_wait_seconds{graph_id}
 platform_workspace_bytes{repository_id}
 ```
@@ -123,6 +124,10 @@ Nothing fails immediately when this rule is broken, which is why it is enforced 
 
 `platform_tool_denied_total` and `platform_egress_denied_total` measure policy being tested — by
 a bug or by an injection attempt. These are the first alerts worth configuring in Phase 3.
+
+`platform_redactions_total` is a security signal too, but read it the other way round: a rising
+redaction rate does not mean the redactor is working well, it means secrets are reaching the
+context assembly stage and the upstream exclusions need fixing (ADR-0011 §6).
 
 ---
 

@@ -204,7 +204,17 @@ Initial providers:
 - Anthropic Claude / Claude Sonnet
 - OpenAI GPT
 
-Provider-specific SDK details remain behind the gateway.
+Provider-specific SDK details remain behind the gateway. Requests and responses use a canonical
+model, and graphs and agents reference a **logical `modelRef`** rather than a provider model id,
+so changing a model is configuration rather than code.
+
+The gateway does not run the tool-calling loop — the runtime iterates and the tool layer
+authorises. It does own resilience, usage and cost accounting, record/replay for evaluation, and
+**egress redaction**, since it is the platform's only path to a third-party provider.
+
+See [ADR-0010](docs/decisions/0010-model-gateway-interface.md),
+[ADR-0011](docs/decisions/0011-model-credentials-cost-and-egress-redaction.md) and
+[docs/architecture/model-gateway.md](docs/architecture/model-gateway.md).
 
 ### Tool Layer
 

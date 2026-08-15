@@ -101,7 +101,16 @@ The initial model providers are:
 - Anthropic Claude / Claude Sonnet
 - OpenAI GPT
 
-Keep provider-specific code behind the model gateway.
+Keep provider-specific code behind the model gateway. No provider SDK type crosses that
+boundary, and graphs and agents reference a logical `modelRef` rather than a provider model id
+(ADR-0010).
+
+The gateway does not run the tool-calling loop — that would put tool execution inside the
+component that talks to third parties. It does own retries, cost accounting, record/replay and
+**egress redaction**, since it is the only path to a provider.
+
+Model credentials are per-developer, in the OS keychain, and never leave the control plane
+process (ADR-0011).
 
 ---
 
@@ -116,6 +125,13 @@ Do not recreate these systems inside the platform.
 Context retrieval from all three authenticates as **the developer running the platform**, never
 a shared privileged service account (ADR-0013 §4). Retrieved context is bounded by the
 developer's own entitlements, and every item records the identity it was retrieved as.
+
+GitHub *actions* use a GitHub App with short-lived per-run installation tokens, denied merge and
+deployment rights (ADR-0012). Action identity is not retrieval identity.
+
+Write-back is read-mostly: unattended writes are marked, idempotent and additive. Jira status
+transitions and all Confluence publication require approval. Platform-authored content is marked
+and treated as lower trust, so the platform cannot read its own unreviewed output back as fact.
 
 ---
 

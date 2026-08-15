@@ -427,29 +427,52 @@ Rules that must not be weakened:
 
 # 12. Model Gateway
 
-Agents must access models through a provider-neutral abstraction.
+Agents must access models through a provider-neutral abstraction (ADR-0010).
 
 Initial models/providers include:
 
 - Claude Sonnet
 - GPT
 
-The gateway should eventually support:
+Do not spread provider-specific SDK calls throughout the agent code. **No provider SDK type crosses the gateway boundary.**
 
-- model selection
-- model configuration
-- structured outputs
-- retries
-- timeouts
-- token accounting
-- cost metadata
-- latency metadata
-- request tracing
-- provider-specific configuration
+## Canonical model
 
-Do not spread provider-specific SDK calls throughout the agent code.
+The gateway defines its own request/response model — messages, tool descriptors as JSON Schema, tool-call requests and results, usage, finish reason, cost — and provider adapters translate in both directions.
 
-Provider-specific implementation belongs behind the model gateway.
+Graphs and agents reference a **logical `modelRef`** (`default-reasoning`, `fast-summarize`), never a provider model id. Changing a model must be configuration, not code.
+
+`providerOptions` is a narrow, explicitly-labelled escape hatch. Pretending none is needed produces a covert one.
+
+## The gateway does not run the tool-calling loop
+
+The agent runtime iterates; the control plane authorises and executes tools. Putting the loop in the gateway would give tool-execution authority to the component that talks to third parties, collapsing the authorization choke point.
+
+Provider-native server-side execution tools are **forbidden** — they bypass the execution interface, the capability model and the audit trail at once.
+
+## What the gateway owns
+
+- a canonical error taxonomy mapping onto ADR-0008 failure categories
+- retries with backoff, rate-limit handling, timeouts, bounded retry budget
+- **record/replay from Phase 1** — without it, every evaluation conflates a harness change with model variance
+- token and cost accounting: the gateway is the sole authority, using a versioned pricing table. Never recompute cost anywhere else.
+- **egress redaction** (see §18)
+
+The gateway may retry internally only while certain no tool call was returned to the caller. After that, retry is the graph engine's decision.
+
+No streaming in V1. Graph nodes consume complete results.
+
+## Credentials
+
+Per-developer, in the **OS keychain** — not `.env` files, not environment variables. Read by the control plane, used only by provider adapters, never passed to the agent runtime or into a workspace.
+
+## Budgets
+
+Per-invocation, per-node-attempt, per-run and per-day ceilings; each the minimum of platform default, repository `budgetCeiling` and node definition. Exceeding one fails the node with `BUDGET_EXCEEDED` — never a warning, never auto-raised. Consumption is recorded durably before the next invocation, so a crash loop cannot get a fresh budget.
+
+## Proving neutrality
+
+Run the same evaluation suite against both providers from the start. An abstraction exercised by one provider is a hypothesis, not a property.
 
 ---
 
@@ -652,6 +675,37 @@ GitHub is the system of record for:
 Use scoped permissions.
 
 Agents should not automatically have merge or production-deployment authority.
+
+The platform acts as a **GitHub App** with short-lived, per-run, per-repository installation tokens (ADR-0012). Never a developer PAT: it would make agent work indistinguishable from human work, break review policy, and carry far broader scope than needed.
+
+The App must not hold merge, branch-protection-bypass, deployment-approval, repository-administration or secret-management permissions. The platform opens pull requests; humans merge them. A control the platform could lift is not a control.
+
+**Action identity is not retrieval identity.** The App acts; context retrieval authenticates as the developer. Reading through the App would let any developer reach repositories they cannot access.
+
+Tokens never enter a workspace, and `git push` never runs inside one.
+
+## Write-back semantics
+
+Default to **read-mostly**. Unattended writes are limited to clearly-marked, idempotent, additive content carrying the run id.
+
+| Action | V1 |
+|---|---|
+| Jira comment | unattended, marked, idempotent |
+| Jira status transition | requires approval |
+| Confluence publication or edit | requires approval |
+| GitHub branch/commit push | unattended, within capability grant |
+| GitHub pull request creation | unattended for `INTERNAL`; approval for `RESTRICTED` |
+| GitHub merge | never |
+
+Idempotency is keyed by run and node, so a retry updates rather than duplicates. Duplicate comments are the classic symptom of a durable system that forgot its external effects are not transactional.
+
+All platform-authored content carries machine-readable provenance markers, and the context engine treats it as **lower trust** than human-authored content. Without this the platform reads its own unreviewed output back as authoritative and confident errors compound quietly — the integration failure mode that gets worse the longer it goes unnoticed.
+
+## Integration contracts
+
+Each integration is an anti-corruption layer over canonical internal models — `WorkItem`, `KnowledgeDocument`, `Repository`, `PullRequest`, `CheckResult`. External system shapes must not reach graph or agent logic, or every Jira configuration change becomes a platform change.
+
+Polling only in V1; webhooks need a reachable endpoint that laptops do not have. CI logs are retrieved to the artifact store and failure-relevant excerpts extracted **deterministically before any model sees them**.
 
 ---
 
