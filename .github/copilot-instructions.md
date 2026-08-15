@@ -481,22 +481,25 @@ Write/destructive capabilities should require stronger authorization and potenti
 
 # 14. Local Execution Environment
 
-V1 AI engineering workloads execute locally.
+V1 AI engineering workloads execute locally, through the execution interface (ADR-0003).
 
-The platform should provide a controlled local execution backend.
+Local workspaces are:
 
-Local workspaces should preferably be:
+- **containerised** — non-root, all capabilities dropped, read-only root filesystem, only the workspace and a size-limited /tmp writable, no home directory or container socket mounted
+- **credential-free** — materialisation and publishing happen outside the container; `git fetch` and `git push` are never executed in a workspace
+- **network default-deny** — access is declared per command profile and limited to declared package registries via an egress proxy
+- reproducible — workspace state is always a function of `(repoRef, baseSHA, ordered patch series)`
+- resource-limited — CPU, memory, PID and disk quotas on every execution
+- observable and audited
+- one per run, exclusively leased, disposable
 
-- isolated as reasonably practical
-- reproducible
-- observable
-- resource-aware
-- identity-scoped to the local developer
-- associated with a specific platform run
+A container runtime (Docker or Podman) is a V1 prerequisite. See ADR-0006.
 
-The local executor may run repository commands required for development workflows.
+Do not write a local executor that runs commands as the developer's own user by default. `unsafe-host-exec` exists for that, is disabled by default, is audited, and escalates consequential tools to mandatory approval.
 
-Typical tooling may include:
+Commands reach a workspace only as named, repository-declared command profiles (ADR-0005). Never accept a shell string or free-form argv from a model.
+
+Typical tooling, provided by platform-maintained images pinned by digest:
 
 - Java
 - Maven / Gradle as required by repositories
@@ -504,11 +507,11 @@ Typical tooling may include:
 - Python
 - Node.js
 - Angular tooling
-- Helm
-- kubectl when a task requires it
 - Git
 - testing tools
 - static analysis
+
+Helm and kubectl are relevant only to repositories that require them, and only in future deployments.
 
 Do not assume every workspace needs every tool.
 

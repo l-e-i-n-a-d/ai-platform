@@ -16,6 +16,16 @@ Azure services (Cosmos DB, Blob Storage, AKS, Key Vault) are the documented targ
 future hosted deployment. They are not V1 requirements — V1 runs entirely on a developer's
 machine. See [ADR-0007](docs/decisions/0007-operational-persistence-and-local-first-storage.md).
 
+## V1 Prerequisites
+
+V1 runs entirely on a developer's machine and needs no cloud account. It does require:
+
+- a container runtime (Docker or Podman) — every repository command runs in a container
+- Java and Python toolchains for the control plane and agent runtime
+- credentials for GitHub, Jira, Confluence and at least one model provider, held locally
+
+See [ADR-0006](docs/decisions/0006-local-execution-isolation-and-credentials.md).
+
 ## Repository
 
 This repository is initially an architectural scaffold. Implementation will proceed incrementally.
@@ -28,6 +38,7 @@ See:
 - [SECURITY.md](SECURITY.md)
 - [EVALUATION.md](EVALUATION.md)
 - [GLOSSARY.md](GLOSSARY.md)
+- [docs/decisions/](docs/decisions/README.md) — architecture decision records
 
 ## Status
 

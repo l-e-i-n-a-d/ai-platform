@@ -46,10 +46,10 @@ is taken.
 |---|---|---|
 | 0001 | Local-first V1 execution model | Planned |
 | 0002 | Deferral of Microsoft Entra ID | Planned |
-| 0003 | Execution interface contract and executor substitutability | Planned |
+| 0003 | [Execution interface contract and executor substitutability](0003-execution-interface-contract.md) | **Accepted** |
 | 0004 | [Control plane / agent runtime boundary and protocol](0004-control-plane-agent-runtime-boundary.md) | **Accepted** |
 | 0005 | [Tool contract, capability grants and authorization choke point](0005-tool-contract-and-authorization-choke-point.md) | **Accepted** |
-| 0006 | Local execution isolation and credential handling | Planned |
+| 0006 | [Local execution isolation and credential handling](0006-local-execution-isolation-and-credentials.md) | **Accepted** |
 | [0007](0007-operational-persistence-and-local-first-storage.md) | Operational persistence and local-first storage | **Accepted** |
 | 0008 | [Graph execution semantics, versioning and durability](0008-graph-execution-semantics-and-durability.md) | **Accepted** |
 | 0009 | Human approval model and authorization without central identity | Planned |

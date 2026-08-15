@@ -211,9 +211,16 @@ See [ADR-0005](docs/decisions/0005-tool-contract-and-authorization-choke-point.m
 
 ### Local Executor
 
-The V1 execution backend.
+The V1 execution backend, implementing the execution interface
+([ADR-0003](docs/decisions/0003-execution-interface-contract.md)).
 
-It provides controlled local workspaces for repository operations.
+Every execution runs in a container: non-root, all capabilities dropped, read-only root
+filesystem, explicit environment allowlist, resource limits, and network default-deny. The
+workspace container holds no credentials — materialisation and publishing happen outside it
+([ADR-0006](docs/decisions/0006-local-execution-isolation-and-credentials.md)).
+
+Workspace state is always a function of `(repoRef, baseSHA, ordered patch series)`, which is
+what makes workspaces disposable, resume possible and a remote executor substitutable.
 
 The graph and agent layers must depend on an execution abstraction, not directly on local shell behavior.
 

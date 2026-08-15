@@ -12,7 +12,8 @@ carry the load, and that the honest limits of attribution must be stated.
 - explicit tool contracts and capability grants
 - a single non-bypassable authorization choke point for all tool invocations
 - repository and workspace boundaries
-- command restrictions in the local executor
+- containerised local execution: non-root, credential-free, network default-deny, resource
+  limited, with a loud and audited `unsafe-host-exec` escape hatch
 - scoped GitHub permissions, with no merge or production-deployment authority
 - credentials held by the local developer and never exposed to models
 - no shared platform credentials — V1 requires no shared operational store (ADR-0007)

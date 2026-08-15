@@ -27,17 +27,33 @@ Read-only tools should be preferred.
 
 ## 2. Local Execution
 
-Local execution must be treated as a privileged capability.
+Local execution must be treated as a privileged capability. Builds and tests execute untrusted
+third-party code by design, on a machine that holds the developer's credentials.
 
-The platform should:
+V1 controls (ADR-0006):
 
-- restrict tool capabilities
-- constrain repository access
-- avoid unrestricted shell access from the control plane
-- identify the workspace associated with a run
-- record consequential actions
+- every execution runs in a container: non-root, all capabilities dropped, read-only root
+  filesystem, only the workspace and a size-limited `/tmp` writable, no home directory or
+  container socket mounted
+- the environment is an explicit allowlist; the parent environment is never inherited
+- CPU, memory, PID and disk limits on every execution
+- network default-deny, with per-command-profile allowlists limited to declared package
+  registries and mediated by an egress proxy; denials are recorded
+- **the workspace container holds no credentials** — materialisation and publishing happen
+  outside it, and `git fetch` / `git push` are never executed in a workspace
+- commands are named, repository-declared command profiles with typed argv and no shell; a
+  model never authors a command
+- images are platform-maintained and pinned by digest; no agent selects, modifies or builds one
+- one workspace per run, exclusively leased, path-scoped, disposable
+- every execution is audited: image digest, profile, resolved argv, limits, usage, network
+  policy, denials, exit code, execution mode
 
-Developers should understand that granting an agent local command execution effectively grants it access to the developer's environment.
+`unsafe-host-exec` — running commands as the developer's own user — is supported but disabled
+by default, warned at startup, recorded in the audit trail, and escalates `EXTERNAL_WRITE` and
+`IRREVERSIBLE` tools to mandatory approval while active.
+
+Developers should understand that enabling it effectively grants an agent access to the
+developer's environment.
 
 ---
 

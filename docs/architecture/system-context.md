@@ -6,13 +6,14 @@ The AI Engineering Platform sits between engineers and the organization's engine
 Engineers
    |
    v
-AI Engineering Platform
+AI Engineering Platform          runs locally on the engineer's machine in V1
    |
    +--> Jira
    +--> Confluence
    +--> GitHub
-   +--> Azure / AKS
    +--> AI Model Providers
+   |
+   +--> Local Executor           containerised workspaces on the same machine
 ```
 
 The platform coordinates engineering workflows but does not replace Jira, Confluence or GitHub.
