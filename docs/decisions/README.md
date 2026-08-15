@@ -38,19 +38,18 @@ Proposed
 
 ## Index
 
-Numbering follows the planned decision set below, not creation order. Gaps are intentional —
-a number is reserved when the decision is identified, and the file appears when the decision
-is taken.
+Numbering follows the planned decision set below, not creation order. All eighteen decisions
+identified by the 2026-08-15 architecture review are now recorded.
 
 | # | Title | Status |
 |---|---|---|
-| 0001 | Local-first V1 execution model | Planned |
-| 0002 | Deferral of Microsoft Entra ID | Planned |
+| 0001 | [Local-first V1 execution model](0001-local-first-v1-execution-model.md) | **Accepted** |
+| 0002 | [Deferral of Microsoft Entra ID](0002-deferral-of-entra-id.md) | **Accepted** |
 | 0003 | [Execution interface contract and executor substitutability](0003-execution-interface-contract.md) | **Accepted** |
 | 0004 | [Control plane / agent runtime boundary and protocol](0004-control-plane-agent-runtime-boundary.md) | **Accepted** |
 | 0005 | [Tool contract, capability grants and authorization choke point](0005-tool-contract-and-authorization-choke-point.md) | **Accepted** |
 | 0006 | [Local execution isolation and credential handling](0006-local-execution-isolation-and-credentials.md) | **Accepted** |
-| [0007](0007-operational-persistence-and-local-first-storage.md) | Operational persistence and local-first storage | **Accepted** |
+| 0007 | [Operational persistence and local-first storage](0007-operational-persistence-and-local-first-storage.md) | **Accepted** |
 | 0008 | [Graph execution semantics, versioning and durability](0008-graph-execution-semantics-and-durability.md) | **Accepted** |
 | 0009 | [Human approval model and authorization without central identity](0009-human-approval-model.md) | **Accepted** |
 | 0010 | [Model gateway interface and provider neutrality](0010-model-gateway-interface.md) | **Accepted** |

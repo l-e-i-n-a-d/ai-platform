@@ -1,0 +1,27 @@
+# Code owners for the AI Engineering Platform.
+#
+# Architecture decisions and component contracts are the parts of this repository
+# that are expensive to get wrong and cheap to change accidentally, so they carry
+# explicit ownership. This is review routing, not an authorization control — see
+# SECURITY.md for the platform's actual security model.
+
+# Default owner for everything not matched below.
+*                           @l-e-i-n-a-d
+
+# Architecture decisions are binding on every component. Changing an accepted ADR
+# is an architectural act, not an editorial one.
+/docs/decisions/            @l-e-i-n-a-d
+
+# Component contracts. Drift here is what the documentation checks exist to catch.
+/docs/architecture/         @l-e-i-n-a-d
+/docs/integrations/         @l-e-i-n-a-d
+
+# Instructions consumed by AI coding agents. These files steer future automated
+# changes, so an unreviewed edit propagates into work nobody explicitly requested.
+/.github/copilot-instructions.md  @l-e-i-n-a-d
+/CLAUDE.md                        @l-e-i-n-a-d
+
+# Security and top-level architecture narrative.
+/SECURITY.md                @l-e-i-n-a-d
+/ARCHITECTURE.md            @l-e-i-n-a-d
+/PRINCIPLES.md              @l-e-i-n-a-d

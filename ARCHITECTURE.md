@@ -343,7 +343,14 @@ The platform coordinates these systems; it does not replace them.
 
 ## 6. Security
 
-V1 is local-first and does not require Microsoft Entra ID.
+V1 is local-first and does not require Microsoft Entra ID. See
+[ADR-0001](docs/decisions/0001-local-first-v1-execution-model.md) and
+[ADR-0002](docs/decisions/0002-deferral-of-entra-id.md).
+
+Where identity is genuinely needed, the platform **borrows** it from systems that have it —
+developer credentials for retrieval, GitHub and Jira for attestation and anchoring — rather than
+asserting its own. No home-grown identity system is built, because that would deliver the
+complexity of identity with none of the assurance.
 
 Security still requires:
 

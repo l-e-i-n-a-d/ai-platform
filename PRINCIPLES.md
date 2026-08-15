@@ -6,6 +6,14 @@ Every developer should be able to run the platform locally.
 
 V1 must not require Kubernetes, AKS, a shared execution cluster or Microsoft Entra ID.
 
+Local-first is not an excuse for weaker architecture. Workflow semantics stay independent of the
+execution environment, no storage SDK type crosses the persistence port, and security
+requirements are unchanged — removing central identity removes an *assurance mechanism*, not a
+*requirement*, and every control affected states its honest limits rather than overclaiming.
+
+See [ADR-0001](docs/decisions/0001-local-first-v1-execution-model.md) and
+[ADR-0002](docs/decisions/0002-deferral-of-entra-id.md).
+
 ## 2. Execution Independence
 
 Graphs and agents must not depend on a particular execution environment.
