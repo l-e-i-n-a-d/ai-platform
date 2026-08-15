@@ -1,0 +1,11 @@
+{
+  "$schema": "../tools/tool-result.schema.json",
+  "$comment": "The answer to the request above. AWAITING_APPROVAL is a result, not an error: the runtime is told what happened and the node attempt suspends on the named Approval. A tool layer that returned a generic failure here would leave the agent to infer the difference between 'denied', 'broken' and 'waiting for a human'.",
+  "protocolVersion": "1",
+  "toolCallId": "call_7f21a9",
+  "status": "AWAITING_APPROVAL",
+  "approvalId": "apr_01HQ8X2K4M9Z_0003",
+  "sideEffectClass": "EXTERNAL_WRITE",
+  "durationMs": 41,
+  "completedAt": "2026-08-15T09:24:02Z"
+}

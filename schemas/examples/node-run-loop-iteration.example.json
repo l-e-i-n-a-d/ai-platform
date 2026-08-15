@@ -1,0 +1,21 @@
+{
+  "$schema": "../graph/node-run.schema.json",
+  "$comment": "The second round of a repair loop: iteration 2, attempt 1. This is the case the four-part key of ADR-0021 \u00a71 exists to distinguish. Without iteration it would be indistinguishable from a retry of iteration 1, and the idempotency key would suppress a tool call the workflow legitimately asked for a second time.",
+  "schemaVersion": "1",
+  "runId": "run_01HQ8X2K4M9Z",
+  "nodeId": "repair",
+  "iteration": 2,
+  "attempt": 1,
+  "version": 1,
+  "nodeType": "agent",
+  "status": "SUCCEEDED",
+  "capabilityGrantId": "grant_01HQ8X2K4P",
+  "contextBundleRef": "3d9391c211bab185a4f6c8e2d5b7a9f1c3e6d8b0a2f4c7e9d1b3a5f7c9e1d3b5",
+  "validatedOutput": {
+    "filesChanged": 2,
+    "summary": "Widened the resolver timeout and pinned the BOM version."
+  },
+  "outputValid": true,
+  "startedAt": "2026-08-15T09:20:00Z",
+  "endedAt": "2026-08-15T09:23:41Z"
+}

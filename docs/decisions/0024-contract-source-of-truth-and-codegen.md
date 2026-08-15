@@ -119,6 +119,41 @@ one language and not the other.
 Per ADR-0020 §3, both languages omit absent optional fields on serialisation and never emit
 `null`.
 
+### 4a. How `oneOf` and open objects are represented in generated code
+
+JSON Schema can express shapes that neither Java records nor Python dataclasses have a direct
+equivalent for. The generator's handling of these is part of the contract, not an implementation
+detail, because both languages must land on the same representation or the conformance test
+compares two different models.
+
+**Discriminated unions become one flattened record.** Where a `oneOf` lists object branches, the
+generated type is a single record whose fields are the union of every branch's fields, with fields
+absent from some branch made optional. String `enum` and `const` values for the same property name
+are unioned across branches rather than taken from the first branch.
+
+This last rule is load-bearing and was got wrong once. Taking the discriminator from the first
+matching branch silently produces an enum missing every other branch's value — a generated type
+that compiles, round-trips most documents, and rejects valid ones. Validation remains the schema's
+job; the generated record is a carrier, and per §4 it does not enforce which combination of fields
+is legal.
+
+**Heterogeneous unions become freeform.** Where a `oneOf` mixes an object branch with a scalar
+branch — `ModelRequest.toolChoice` is `"AUTO"` or `{"name": ...}` — no record can carry both, so
+the generated type is `Object` in Java and `Any` in Python.
+
+**Objects that declare properties *and* allow additional ones become freeform.** `Tool.inputSchema`
+declares known fields with `additionalProperties: true`. Generating a record for it would silently
+drop every undeclared key on round trip, which is data loss disguised as a type. The generated type
+is a map.
+
+**Self-referential definitions are emitted once, by name.** A `$ref` that re-enters a definition
+already being generated — `Condition` refers to itself through `expression` — resolves to a
+reference to the in-progress type rather than expanding it, which would not terminate.
+
+Each of these is a deliberate loss of static typing in exchange for not losing data. Where the
+generator cannot represent a shape faithfully, it produces a permissive type rather than a precise
+type that is wrong.
+
 ### 5. `schemaVersion` is a single integer-valued string per document kind
 
 Stored documents carry `schemaVersion`; wire protocol messages carry `protocolVersion`

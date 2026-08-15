@@ -76,6 +76,29 @@
       "type": "boolean",
       "description": "ADR-0008 §14. Cancellation always stops new work and is best-effort for work in flight. Stated plainly because the opposite is routinely assumed."
     },
+    "currency": {
+      "type": "string",
+      "description": "ADR-0026 §1. ISO 4217 code, fixed for the run's lifetime. A run whose model policy could resolve to providers billing in different currencies is rejected at creation (§2): the platform does not convert, because a converted budget is enforced against an exchange rate nobody recorded.",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "budget": {
+      "type": "object",
+      "description": "ADR-0026 §3. The run ceiling, and the only budget that is mandatory. Node and grant budgets are optional and are clamped to what remains here, so the nesting is genuine containment rather than four independent numbers.",
+      "properties": {
+        "maxCostUnits": { "$ref": "../common/common.schema.json#/$defs/costUnits" },
+        "maxDurationMs": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["maxCostUnits"],
+      "additionalProperties": false
+    },
+    "consumedCostUnits": {
+      "$ref": "../common/common.schema.json#/$defs/costUnits",
+      "description": "ADR-0026 §4. Monotonically non-decreasing, updated in the same transactional batch as the ModelResponse or ToolResult that incurred the cost. A separate update can be lost, and lost spend is spend the platform believes did not happen. Failed attempts accumulate: forgiving them under-counts exactly the runs that are going wrong."
+    },
+    "approvalDeadline": {
+      "$ref": "../common/common.schema.json#/$defs/timestamp",
+      "description": "ADR-0025 §3. Once passed, APPROVAL_EXPIRED stops being retryable regardless of remaining attempt budget. This is the bound that stops a forgotten run re-requesting approval indefinitely while holding a workspace lease."
+    },
     "currentNodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
     "latestCheckpointId": { "type": "string" },
     "initiatedBy": {
@@ -96,6 +119,9 @@
     "status",
     "epoch",
     "repositories",
+    "currency",
+    "budget",
+    "consumedCostUnits",
     "cancellationRequested",
     "initiatedBy",
     "createdAt",

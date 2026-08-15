@@ -1,0 +1,22 @@
+{
+  "$schema": "../graph/node-run.schema.json",
+  "$comment": "The retry of the record above: same iteration, attempt incremented. Note the fresh capabilityGrantId -- a failed attempt leaves no residual authority behind (ADR-0014). The idempotency key for any tool call here is unchanged from attempt 1, because ADR-0021 \u00a75 excludes attempt from it: retrying must not duplicate an external effect.",
+  "schemaVersion": "1",
+  "runId": "run_01HQ8X2K4M9Z",
+  "nodeId": "verify",
+  "iteration": 1,
+  "attempt": 2,
+  "version": 1,
+  "nodeType": "tool",
+  "status": "SUCCEEDED",
+  "capabilityGrantId": "grant_01HQ8X2K4N",
+  "validatedOutput": {
+    "passed": true,
+    "testsRun": 412,
+    "failures": 0
+  },
+  "outputValid": true,
+  "deadline": "2026-08-15T09:46:22Z",
+  "startedAt": "2026-08-15T09:16:22Z",
+  "endedAt": "2026-08-15T09:18:03Z"
+}

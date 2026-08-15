@@ -47,18 +47,18 @@
         },
         "retryableCategories": {
           "type": "array",
-          "description": "INDETERMINATE is deliberately excluded from the permitted values: ADR-0008 §7 states it is never auto-retried, because a side effect may or may not have occurred. It is resolved by reconciliation or escalated to a human.",
+          "description": "Four categories are deliberately absent. INDETERMINATE (ADR-0008 §7) is never auto-retried because a side effect may or may not have occurred. APPROVAL_REJECTED and APPROVAL_REVOKED (ADR-0025 §1) are refusals, and a refusal a policy can retry around is not a refusal. BUDGET_EXCEEDED (ADR-0026 §5) suspends rather than fails, and retrying a bound that was hit re-hits it. APPROVAL_EXPIRED is permitted but never defaulted: ADR-0025 §2 makes retrying it mean re-requesting the same subject, never re-executing the node.",
           "items": {
             "type": "string",
             "enum": [
               "TRANSIENT",
               "MODEL_ERROR",
-              "BUDGET_EXCEEDED",
               "INVALID_OUTPUT",
               "TOOL_DENIED",
               "VERIFICATION_FAILED",
               "EXECUTION_ERROR",
-              "INTEGRATION_ERROR"
+              "INTEGRATION_ERROR",
+              "APPROVAL_EXPIRED"
             ]
           },
           "uniqueItems": true
@@ -131,7 +131,13 @@
           "properties": {
             "maxIterations": { "type": "integer", "minimum": 1 },
             "maxTokens": { "type": "integer", "minimum": 1 },
-            "maxCostUnits": { "type": "integer", "minimum": 0 }
+            "maxRetrievals": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 5,
+              "description": "ADR-0027 \u00a73. Bounds context.search calls per node attempt. Exhausting it does not fail the node \u2014 the tool reports the bound was reached and the agent proceeds with what it has, because converting a bounded resource into a run failure is worse than a slightly thinner bundle."
+            },
+            "maxCostUnits": { "$ref": "../common/common.schema.json#/$defs/costUnits" }
           },
           "required": ["maxIterations", "maxTokens"],
           "additionalProperties": false

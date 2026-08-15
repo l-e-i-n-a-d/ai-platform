@@ -75,7 +75,7 @@
       "properties": {
         "maxInvocations": { "type": "integer", "minimum": 0 },
         "maxWallClockMs": { "type": "integer", "minimum": 1 },
-        "maxCostUnits": { "type": "integer", "minimum": 0 },
+        "maxCostUnits": { "$ref": "../common/common.schema.json#/$defs/costUnits" },
         "maxDenials": {
           "type": "integer",
           "description": "Denial circuit breaker (ADR-0005 §6). Exceeding it fails the node with TOOL_DENIED, which surfaces a wrong grant instead of letting a model spend its whole budget rediscovering that it may not do something.",

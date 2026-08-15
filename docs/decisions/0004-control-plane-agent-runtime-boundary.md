@@ -120,7 +120,7 @@ process startup on every node.
 ### 7. Durable state is authoritative; the HTTP call is not
 
 When the control plane dispatches a node attempt it has already written
-`NodeExecution{status=RUNNING, attempt=n}` durably. If the HTTP call then fails, times out, or
+`NodeRun{status=RUNNING, attempt=n}` durably. If the HTTP call then fails, times out, or
 the control plane itself restarts, recovery is driven entirely from durable state per ADR-0008.
 The response is an optimisation, not the record.
 

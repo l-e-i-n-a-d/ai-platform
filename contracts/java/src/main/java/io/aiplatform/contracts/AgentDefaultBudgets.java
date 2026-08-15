@@ -17,6 +17,7 @@ import java.util.Map;
 public record AgentDefaultBudgets(
         @Required long maxIterations,
         @Required long maxTokens,
+        Long maxRetrievals,
         Long maxCostUnits
 ) {
 
@@ -28,6 +29,9 @@ public record AgentDefaultBudgets(
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("maxIterations", maxIterations);
         map.put("maxTokens", maxTokens);
+        if (maxRetrievals != null) {
+            map.put("maxRetrievals", maxRetrievals);
+        }
         if (maxCostUnits != null) {
             map.put("maxCostUnits", maxCostUnits);
         }
@@ -39,6 +43,7 @@ public record AgentDefaultBudgets(
         return new AgentDefaultBudgets(
                 ((Number) map.get("maxIterations")).longValue(),
                 ((Number) map.get("maxTokens")).longValue(),
+                map.get("maxRetrievals") == null ? null : ((Number) map.get("maxRetrievals")).longValue(),
                 map.get("maxCostUnits") == null ? null : ((Number) map.get("maxCostUnits")).longValue()
         );
     }

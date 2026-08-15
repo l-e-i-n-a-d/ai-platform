@@ -152,6 +152,112 @@ def check_enums(path: Path, document: dict) -> None:
                 fail(path, f"at {pointer or '/'}: enum contains duplicate values")
 
 
+# ADR-0020 §5: the four document kinds that are content-addressed in V1. Tool input is hashed as
+# part of the idempotency key, but its shape is defined per tool rather than here.
+HASHED_SCHEMAS = {
+    "graph/graph.schema.json",
+    "agent/agent.schema.json",
+    "context/context-bundle.schema.json",
+}
+
+
+def _resolve_ref(path: Path, ref: str, documents: dict[Path, dict]):
+    """Resolve a $ref to (file, node), or None if it leaves the schema set."""
+    file_part, _, pointer = ref.partition("#")
+    target = (path.parent / file_part).resolve() if file_part else path.resolve()
+    document = documents.get(target)
+    if document is None:
+        return None
+    node = document
+    for token in [t for t in pointer.split("/") if t]:
+        token = token.replace("~1", "/").replace("~0", "~")
+        if isinstance(node, dict) and token in node:
+            node = node[token]
+        else:
+            return None
+    return (target, node)
+
+
+def check_hashed_documents(documents: dict[Path, dict]) -> None:
+    """ADR-0020 §2 and §4, mechanically.
+
+    §2 bans non-integer numbers and null from any document subject to content hashing,
+    because RFC 8785 delegates number formatting to ECMAScript Number::toString, whose Java
+    and Python equivalents disagree in several ranges. The divergence is rare and
+    data-dependent, which is the worst kind to debug — so the class of defect is excluded
+    rather than handled.
+
+    §4 restricts x-hashExclude to hashed schemas, so the annotation cannot be used to quietly
+    drop meaningful content from a hash somewhere it was never reviewed.
+
+    Both checks follow $ref transitively, because a hashed schema that permits a float by
+    referencing one in common.schema.json permits a float.
+    """
+    hashed_roots = {}
+    for path in documents:
+        rel = str(path.relative_to(SCHEMAS)) if SCHEMAS in path.parents else None
+        if rel and rel.replace("\\", "/") in HASHED_SCHEMAS:
+            hashed_roots[path] = documents[path]
+
+    missing = HASHED_SCHEMAS - {
+        str(p.relative_to(SCHEMAS)).replace("\\", "/") for p in hashed_roots
+    }
+    for name in sorted(missing):
+        fail(SCHEMAS, f"ADR-0020 §5 names {name} as content-addressed, but it does not exist")
+
+    hashed_nodes: set[tuple[Path, int]] = set()
+
+    for root, document in hashed_roots.items():
+        stack = [(root, document, "")]
+        seen: set[tuple[Path, int]] = set()
+        while stack:
+            file, node, pointer = stack.pop()
+            if not isinstance(node, (dict, list)):
+                continue
+            key = (file, id(node))
+            if key in seen:
+                continue
+            seen.add(key)
+            hashed_nodes.add(key)
+
+            if isinstance(node, dict):
+                declared = node.get("type")
+                types = declared if isinstance(declared, list) else [declared]
+                for banned in ("number", "null"):
+                    if banned in types:
+                        fail(
+                            file,
+                            f"at {pointer or '/'}: '{banned}' is not permitted in the hashed "
+                            f"document {root.name} (ADR-0020 §2 — hashed documents contain "
+                            f"integers only)",
+                        )
+                ref = node.get("$ref")
+                if isinstance(ref, str):
+                    resolved = _resolve_ref(file, ref, documents)
+                    if resolved is not None:
+                        stack.append((resolved[0], resolved[1], f"{pointer} -> {ref}"))
+                for name, child in node.items():
+                    if name == "$ref":
+                        continue
+                    stack.append((file, child, f"{pointer}/{name}"))
+            else:
+                for index, child in enumerate(node):
+                    stack.append((file, child, f"{pointer}/{index}"))
+
+    for path, document in documents.items():
+        for pointer, node in walk(document):
+            if "x-hashExclude" not in node:
+                continue
+            if node.get("x-hashExclude") is not True:
+                fail(path, f"at {pointer or '/'}: x-hashExclude must be exactly true")
+            if (path, id(node)) not in hashed_nodes:
+                fail(
+                    path,
+                    f"at {pointer or '/'}: x-hashExclude is only meaningful inside a hashed "
+                    f"document (ADR-0020 §4); this location is not reachable from one",
+                )
+
+
 def validate_examples(documents: dict[Path, dict]) -> str:
     """Validate the example documents in schemas/examples/.
 
@@ -262,6 +368,8 @@ def main() -> int:
         check_refs(path, document, documents)
         check_closed(path, document)
         check_enums(path, document)
+
+    check_hashed_documents(documents)
 
     metaschema_note = validate_against_metaschema(documents)
     example_note = validate_examples(documents)

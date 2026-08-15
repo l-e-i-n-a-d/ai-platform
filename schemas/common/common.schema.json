@@ -62,6 +62,11 @@
       "description": "Platform-assigned repository identifier. ADR-0014 §1: never derived from the remote URL.",
       "pattern": "^repo_[0-9a-zA-Z]{4,64}$"
     },
+    "costUnits": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "ADR-0026 §1. One cost unit is one micro-unit of the run's currency: 1 000 000 cost units is 1.00 of the ISO 4217 currency named on the GraphRun. Integers rather than decimals because ADR-0020 bans non-integers from hashed documents, and because float accumulation across thousands of calls makes a spending limit approximate — which for a spending limit is the same as unenforced. Provider amounts finer than a micro-unit are rounded up at record time, so the platform never under-reports spend."
+    },
     "timestamp": {
       "type": "string",
       "format": "date-time",
@@ -101,6 +106,7 @@
         "INDETERMINATE",
         "CANCELLED",
         "APPROVAL_REJECTED",
+        "APPROVAL_REVOKED",
         "APPROVAL_EXPIRED",
         "DEFINITION_UNAVAILABLE"
       ]

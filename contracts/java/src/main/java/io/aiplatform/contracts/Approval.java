@@ -30,6 +30,7 @@ public record Approval(
         @Required String createdAt,
         String decidedBy,
         String decidedAt,
+        String reRequestOf,
         String externalRef,
         String rationale
 ) {
@@ -59,6 +60,9 @@ public record Approval(
         if (decidedAt != null) {
             map.put("decidedAt", decidedAt);
         }
+        if (reRequestOf != null) {
+            map.put("reRequestOf", reRequestOf);
+        }
         if (externalRef != null) {
             map.put("externalRef", externalRef);
         }
@@ -86,6 +90,7 @@ public record Approval(
                 (String) map.get("createdAt"),
                 map.get("decidedBy") == null ? null : (String) map.get("decidedBy"),
                 map.get("decidedAt") == null ? null : (String) map.get("decidedAt"),
+                map.get("reRequestOf") == null ? null : (String) map.get("reRequestOf"),
                 map.get("externalRef") == null ? null : (String) map.get("externalRef"),
                 map.get("rationale") == null ? null : (String) map.get("rationale")
         );

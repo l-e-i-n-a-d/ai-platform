@@ -1,0 +1,33 @@
+{
+  "$schema": "../approval/approval.schema.json",
+  "$comment": "The human decision the run suspended on. subjectHash binds the approval to exactly what was approved and is re-verified on resume; renderingHash records what the human was actually shown. Recording both is what turns 'approved something' into 'approved this', and the pair is what detects a rendering that differs from the subject.",
+  "schemaVersion": "1",
+  "approvalId": "apr_01HQ8X2K4M9Z_0003",
+  "runId": "run_01HQ8X2K4M9Z",
+  "nodeId": "open-pull-request",
+  "kind": "LOCAL_OPERATOR_CONSENT",
+  "requiredKind": "LOCAL_OPERATOR_CONSENT",
+  "subjectHash": "c956b7bb82d3c1739f0e2a5d8b1c4e7a0d3f6b9c2e5a8d1f4b7c0e3a6d9b2f5c",
+  "subjectRef": {
+    "uri": "artifact://run/run_01HQ8X2K4M9Z/approvals/0003/subject.json",
+    "sha256": "c956b7bb82d3c1739f0e2a5d8b1c4e7a0d3f6b9c2e5a8d1f4b7c0e3a6d9b2f5c",
+    "sizeBytes": 2048,
+    "contentType": "application/json",
+    "classification": {
+      "artifactType": "REPORT",
+      "sensitivity": "INTERNAL",
+      "provenance": "PLATFORM_GENERATED",
+      "redacted": false,
+      "retentionTier": "AUDIT"
+    },
+    "createdAt": "2026-08-15T09:14:22Z"
+  },
+  "renderingHash": "05527d48da7326425a8f1c4e7b0d3a6f9c2e5b8d1a4f7c0e3b6d9a2f5c8e1b4d",
+  "status": "APPROVED",
+  "decidedBy": "daniel",
+  "decidedAt": "2026-08-15T09:31:10Z",
+  "expiresAt": "2026-08-16T09:24:02Z",
+  "interactive": true,
+  "rationale": "Diff reviewed; the BOM pin matches the platform baseline.",
+  "createdAt": "2026-08-15T09:24:02Z"
+}

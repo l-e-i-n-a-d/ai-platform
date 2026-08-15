@@ -68,7 +68,12 @@ gaps found while writing `docs/contracts/v1-domain-contracts.md`.
 | 0022 | [Agent definition, versioning and pinning](0022-agent-definition-versioning-and-pinning.md) | **Accepted** |
 | 0023 | [Multi-repository workspace layout and path scoping](0023-multi-repository-workspace-layout.md) | **Accepted** |
 | 0024 | [Contract source of truth, code generation and schema versioning](0024-contract-source-of-truth-and-codegen.md) | **Accepted** |
+| 0025 | [Approval expiry, re-request and non-decision outcomes](0025-approval-expiry-and-re-request.md) | **Accepted** |
+| 0026 | [Cost units, currency and run-level budget enforcement](0026-cost-units-and-budget-enforcement.md) | **Accepted** |
+| 0027 | [Mid-loop context retrieval and bundle supersession](0027-mid-loop-context-retrieval.md) | **Accepted** |
 
 Deferred questions, documented but not yet decided: eventing mechanism; Kubernetes executor;
 hosted multi-user identity; Key Vault adoption; webhook ingestion; evaluation gating
-thresholds.
+thresholds; per-integration reconciliation procedures (OQ-11, documented per write tool rather
+than by ADR); evaluation storage lifecycle and benchmark corpus (see
+[evaluation](../architecture/evaluation.md) §9).

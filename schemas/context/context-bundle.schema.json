@@ -16,7 +16,7 @@
     "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
     "supersedes": {
       "$ref": "../common/common.schema.json#/$defs/sha256",
-      "description": "The previous bundleRef when this is a refresh. Bundles are never edited in place."
+      "description": "ADR-0027 §2. The predecessor bundleRef. Set when a mid-loop context.search supersedes the bundle, or on refresh. Bundles are never edited in place, and supersession is append-only — a superseding bundle never drops an item its predecessor contained, because an agent cannot un-see something. The final bundle in a chain is therefore still the complete record of what the agent saw."
     },
     "budget": {
       "type": "object",

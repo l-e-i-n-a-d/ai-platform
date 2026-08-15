@@ -33,7 +33,8 @@
       ]
     },
     "literal": {
-      "type": ["string", "number", "boolean", "null"]
+      "type": ["string", "integer", "boolean"],
+      "description": "Deliberately excludes number and null. Conditions are embedded in Graph, which is content-addressed, and ADR-0020 \u00a72 bans non-integer numbers from hashed documents because RFC 8785 delegates number formatting to ECMAScript Number::toString, whose Java and Python equivalents disagree in several ranges. A float literal in a condition would make graphVersionHash depend on which language published the graph. null is excluded by ADR-0020 \u00a73 (absent means absent) and is unnecessary: the presence operator already expresses exists and notExists, which is what a null comparison would be reaching for."
     },
     "expression": {
       "oneOf": [

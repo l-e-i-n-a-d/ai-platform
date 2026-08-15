@@ -1,0 +1,41 @@
+{
+  "$schema": "../graph/graph-run.schema.json",
+  "$comment": "A run resumed after a week-long approval pause. It matters that agentPins was resolved at creation (ADR-0022 \u00a73): the agent definition may well have been edited during the pause, and the run must continue with the version it started with. SUSPENDED rather than FAILED is the point of ADR-0008 \u00a76 -- closing a laptop is an expected, recoverable state. budget and consumedCostUnits are integer micro-units of currency (ADR-0026 \u00a71): this run has spent 1.8475 USD of a 4.00 USD ceiling. The run budget is mandatory precisely because a loop of bounded nodes is still unbounded spend unless something computes the total.",
+  "schemaVersion": "1",
+  "runId": "run_01HQ8X2K4M9Z",
+  "version": 47,
+  "graphId": "bugfix-quarkus",
+  "graphVersionHash": "9f2b1c7d4a8e6f30b5c9d2e7a1f4b8c3d6e9a2f5b8c1d4e7a0f3b6c9d2e5a8f1",
+  "agentPins": {
+    "repository-analyst": "0cddb702921ac0c7fba236099047b3cd4ebd3936ebb7a8c1ebd19952b22a3fea"
+  },
+  "status": "SUSPENDED",
+  "epoch": 3,
+  "lease": {
+    "holderId": "orchestrator-laptop-7f21",
+    "acquiredAt": "2026-08-15T09:00:00Z",
+    "expiresAt": "2026-08-15T09:30:00Z"
+  },
+  "workItemRef": {
+    "system": "JIRA",
+    "key": "ORD-4821"
+  },
+  "repositories": [
+    "repo_orderservice",
+    "repo_orderclient"
+  ],
+  "currency": "USD",
+  "budget": {
+    "maxCostUnits": 4000000,
+    "maxDurationMs": 3600000
+  },
+  "consumedCostUnits": 1847500,
+  "approvalDeadline": "2026-08-22T11:02:14Z",
+  "workspaceId": "ws_01HQ8X2K4M9Z",
+  "cancellationRequested": false,
+  "currentNodeId": "open-pull-request",
+  "latestCheckpointId": "ckpt_01HQ8X2K4M9Z_0009",
+  "initiatedBy": "daniel",
+  "createdAt": "2026-08-08T11:02:14Z",
+  "updatedAt": "2026-08-15T09:14:22Z"
+}

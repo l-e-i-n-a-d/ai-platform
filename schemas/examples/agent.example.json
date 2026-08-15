@@ -1,0 +1,28 @@
+{
+  "$schema": "../agent/agent.schema.json",
+  "$comment": "The exact document of the agent-version-hash vector in schemas/hashing/vectors.json. Its agentVersionHash is the hash of this document with agentVersionHash removed (ADR-0020 \u00a74), which is what makes the pin in graph-run-resume.example.json verifiable rather than merely recorded.",
+  "schemaVersion": "1",
+  "agentId": "repository-analyst",
+  "agentVersionHash": "0cddb702921ac0c7fba236099047b3cd4ebd3936ebb7a8c1ebd19952b22a3fea",
+  "title": "Repository analyst",
+  "description": "Locates the code responsible for a described behaviour.",
+  "systemInstructions": [
+    "You analyse repositories. You do not modify them."
+  ],
+  "defaultModelPolicy": {
+    "selector": "reasoning.default"
+  },
+  "defaultBudgets": {
+    "maxIterations": 12,
+    "maxTokens": 120000,
+    "maxCostUnits": 50
+  },
+  "capabilityCeiling": {
+    "allowedTools": [
+      "workspace.read_file",
+      "workspace.search"
+    ],
+    "maxSideEffect": "READ"
+  },
+  "outputContractStyle": "STRUCTURED"
+}

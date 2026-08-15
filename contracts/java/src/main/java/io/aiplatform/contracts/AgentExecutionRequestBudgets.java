@@ -14,6 +14,7 @@ public record AgentExecutionRequestBudgets(
         @Required long maxIterations,
         @Required long maxTokens,
         @Required String deadline,
+        Long maxRetrievals,
         Long maxCostUnits
 ) {
 
@@ -26,6 +27,9 @@ public record AgentExecutionRequestBudgets(
         map.put("maxIterations", maxIterations);
         map.put("maxTokens", maxTokens);
         map.put("deadline", deadline);
+        if (maxRetrievals != null) {
+            map.put("maxRetrievals", maxRetrievals);
+        }
         if (maxCostUnits != null) {
             map.put("maxCostUnits", maxCostUnits);
         }
@@ -38,6 +42,7 @@ public record AgentExecutionRequestBudgets(
                 ((Number) map.get("maxIterations")).longValue(),
                 ((Number) map.get("maxTokens")).longValue(),
                 (String) map.get("deadline"),
+                map.get("maxRetrievals") == null ? null : ((Number) map.get("maxRetrievals")).longValue(),
                 map.get("maxCostUnits") == null ? null : ((Number) map.get("maxCostUnits")).longValue()
         );
     }

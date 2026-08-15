@@ -1,0 +1,16 @@
+{
+  "$schema": "../tools/tool-request.schema.json",
+  "$comment": "Opening a pull request is EXTERNAL_WRITE, so the Tool declares idempotency KEYED and the platform supplies the key. The request carries no runId, nodeId, iteration or attempt: the subject is derived from callbackToken (ADR-0004 \u00a710), never claimed by the caller, which is what stops the runtime widening its own authority by asking differently.",
+  "protocolVersion": "1",
+  "toolCallId": "call_7f21a9",
+  "toolId": "github.pull_request.create",
+  "toolVersion": "1.0.0",
+  "callbackToken": "cbt_01HQ8X2K4M9Z_verify_1_2_3f9a2c7e",
+  "input": {
+    "title": "ORD-4821: widen resolver timeout and pin the Quarkus BOM",
+    "body": "Fixes intermittent dependency resolution failures in CI.",
+    "draft": false
+  },
+  "idempotencyKey": "dac6af0bb5c9cf45a2f7b4f424aaf44eab9a159a7f8a879376ef4d41cfef05df",
+  "requestedAt": "2026-08-15T09:24:02Z"
+}

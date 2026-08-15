@@ -28,7 +28,7 @@ expensive thing to change once runs exist.
 | `execution/` | `ExecutionRequest`, `ExecutionResult`, `WorkspaceSpec` | ADR-0003, ADR-0006 |
 | `tools/` | `Tool`, `CapabilityGrant`, `CommandProfile` | ADR-0005 |
 | `agent/` | `AgentExecutionRequest`, `AgentExecutionResult` | ADR-0004 |
-| `graph/` | `GraphDefinition`, `Condition`, `Run`, `NodeExecution`, `Checkpoint` | ADR-0008 |
+| `graph/` | `Graph`, `Condition`, `GraphRun`, `NodeRun`, `Checkpoint` | ADR-0008, ADR-0019 |
 | `approval/` | `Approval` | ADR-0009 |
 | `model/` | `ModelRequest`, `ModelResponse` | ADR-0010, ADR-0011 |
 | `context/` | `ContextBundle` | ADR-0013 |

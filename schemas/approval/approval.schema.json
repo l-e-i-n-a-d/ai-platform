@@ -38,6 +38,10 @@
       "$ref": "../common/common.schema.json#/$defs/timestamp",
       "description": "Approvals expire. An indefinitely valid approval on a run that resumes weeks later is an approval of something nobody is still thinking about."
     },
+    "reRequestOf": {
+      "type": "string",
+      "description": "ADR-0025 §2. The approvalId of the expired approval this one replaces. Present only on a re-request, which copies subjectHash and subjectRef unchanged: retrying an expired approval re-asks about the same subject and never re-executes the node, because re-execution could change what is being approved."
+    },
     "interactive": {
       "type": "boolean",
       "description": "False when approved non-interactively (ADR-0018 §4). Recorded rather than forbidden, so that a batch-approved run is visibly distinguishable in the audit trail from one a human actually looked at."

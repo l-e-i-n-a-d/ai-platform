@@ -1,0 +1,31 @@
+{
+  "$schema": "../execution/workspace.schema.json",
+  "$comment": "Two repositories in one workspace, laid out as workspace/<repositoryId>/ per ADR-0023 \u00a71. Every workspace-relative path therefore begins with a repositoryId, which is what lets a single path rule govern cwd, capability scope, artifacts and checkpoints. The lease is exclusive: two runs never share a checkout.",
+  "schemaVersion": "1",
+  "workspaceId": "ws_01HQ8X2K4M9Z",
+  "runId": "run_01HQ8X2K4M9Z",
+  "status": "LEASED",
+  "toolImageDigest": "ghcr.io/acme/ai-platform-workspace@sha256:7b3d9f2a5c8e1b4d7a0c3f6e9b2d5a8c1e4f7b0d3a6c9e2b5d8f1a4c7e0b3d6f",
+  "repositories": [
+    {
+      "repositoryId": "repo_orderservice",
+      "remote": "https://github.com/acme/order-service.git",
+      "ref": "refs/heads/main",
+      "commitSha": "4a7c1e93b2d85f60a1c4e7b9d2f5a8c1e4b7d0a3"
+    },
+    {
+      "repositoryId": "repo_orderclient",
+      "remote": "https://github.com/acme/order-client.git",
+      "ref": "refs/heads/main",
+      "commitSha": "8e3b0d61f4a97c25b8e1d4a7c0f3b6e9d2a5c8f1"
+    }
+  ],
+  "lease": {
+    "holderId": "orchestrator-laptop-7f21",
+    "expiresAt": "2026-08-15T09:30:00Z"
+  },
+  "executionMode": "container",
+  "quotaBytes": 5368709120,
+  "createdAt": "2026-08-08T11:02:20Z",
+  "lastUsedAt": "2026-08-15T09:23:41Z"
+}

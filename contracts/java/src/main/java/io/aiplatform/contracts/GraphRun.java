@@ -24,6 +24,9 @@ public record GraphRun(
         @Required long epoch,
         @Required List<String> repositories,
         @Required boolean cancellationRequested,
+        @Required String currency,
+        @Required GraphRunBudget budget,
+        @Required long consumedCostUnits,
         @Required String initiatedBy,
         @Required String createdAt,
         @Required String updatedAt,
@@ -32,6 +35,7 @@ public record GraphRun(
         GraphRunWorkItemRef workItemRef,
         String workspaceId,
         Map<String, Object> variables,
+        String approvalDeadline,
         String currentNodeId,
         String latestCheckpointId,
         String completedAt,
@@ -53,6 +57,9 @@ public record GraphRun(
         map.put("epoch", epoch);
         map.put("repositories", repositories);
         map.put("cancellationRequested", cancellationRequested);
+        map.put("currency", currency);
+        map.put("budget", budget.toMap());
+        map.put("consumedCostUnits", consumedCostUnits);
         map.put("initiatedBy", initiatedBy);
         map.put("createdAt", createdAt);
         map.put("updatedAt", updatedAt);
@@ -70,6 +77,9 @@ public record GraphRun(
         }
         if (variables != null) {
             map.put("variables", variables);
+        }
+        if (approvalDeadline != null) {
+            map.put("approvalDeadline", approvalDeadline);
         }
         if (currentNodeId != null) {
             map.put("currentNodeId", currentNodeId);
@@ -98,6 +108,9 @@ public record GraphRun(
                 ((Number) map.get("epoch")).longValue(),
                 asList(map.get("repositories")),
                 (Boolean) map.get("cancellationRequested"),
+                (String) map.get("currency"),
+                GraphRunBudget.fromMap(asMap(map.get("budget"))),
+                ((Number) map.get("consumedCostUnits")).longValue(),
                 (String) map.get("initiatedBy"),
                 (String) map.get("createdAt"),
                 (String) map.get("updatedAt"),
@@ -106,6 +119,7 @@ public record GraphRun(
                 map.get("workItemRef") == null ? null : GraphRunWorkItemRef.fromMap(asMap(map.get("workItemRef"))),
                 map.get("workspaceId") == null ? null : (String) map.get("workspaceId"),
                 map.get("variables") == null ? null : (Map<String, Object>) map.get("variables"),
+                map.get("approvalDeadline") == null ? null : (String) map.get("approvalDeadline"),
                 map.get("currentNodeId") == null ? null : (String) map.get("currentNodeId"),
                 map.get("latestCheckpointId") == null ? null : (String) map.get("latestCheckpointId"),
                 map.get("completedAt") == null ? null : (String) map.get("completedAt"),

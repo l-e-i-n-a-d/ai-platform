@@ -50,7 +50,7 @@
         "budgetCeiling": {
           "type": "object",
           "properties": {
-            "maxCostUnitsPerRun": { "type": "integer", "minimum": 0 },
+            "maxCostUnitsPerRun": { "$ref": "../common/common.schema.json#/$defs/costUnits" },
             "maxInvocationsPerAttempt": { "type": "integer", "minimum": 0 }
           },
           "additionalProperties": false

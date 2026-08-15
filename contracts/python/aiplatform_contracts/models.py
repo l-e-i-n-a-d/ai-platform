@@ -109,6 +109,7 @@ __all__ = [
     "GraphRetryPolicyBackoffStrategy",
     "GraphRetryPolicyRetryableCategoriesItem",
     "GraphRun",
+    "GraphRunBudget",
     "GraphRunFailure",
     "GraphRunLease",
     "GraphRunStatus",
@@ -549,6 +550,7 @@ class FailureCategory(str, Enum):
     INDETERMINATE = "INDETERMINATE"
     CANCELLED = "CANCELLED"
     APPROVAL_REJECTED = "APPROVAL_REJECTED"
+    APPROVAL_REVOKED = "APPROVAL_REVOKED"
     APPROVAL_EXPIRED = "APPROVAL_EXPIRED"
     DEFINITION_UNAVAILABLE = "DEFINITION_UNAVAILABLE"
 
@@ -625,12 +627,12 @@ class GraphRetryPolicyRetryableCategoriesItem(str, Enum):
 
     TRANSIENT = "TRANSIENT"
     MODEL_ERROR = "MODEL_ERROR"
-    BUDGET_EXCEEDED = "BUDGET_EXCEEDED"
     INVALID_OUTPUT = "INVALID_OUTPUT"
     TOOL_DENIED = "TOOL_DENIED"
     VERIFICATION_FAILED = "VERIFICATION_FAILED"
     EXECUTION_ERROR = "EXECUTION_ERROR"
     INTEGRATION_ERROR = "INTEGRATION_ERROR"
+    APPROVAL_EXPIRED = "APPROVAL_EXPIRED"
 
 
 class GraphRunStatus(str, Enum):
@@ -1048,6 +1050,7 @@ class AgentDefaultBudgets:
 
     maxIterations: int
     maxTokens: int
+    maxRetrievals: int | None = None
     maxCostUnits: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -1055,6 +1058,8 @@ class AgentDefaultBudgets:
         data: dict[str, Any] = {}
         data["maxIterations"] = self.maxIterations
         data["maxTokens"] = self.maxTokens
+        if self.maxRetrievals is not None:
+            data["maxRetrievals"] = self.maxRetrievals
         if self.maxCostUnits is not None:
             data["maxCostUnits"] = self.maxCostUnits
         return data
@@ -1065,6 +1070,7 @@ class AgentDefaultBudgets:
         return cls(
             maxIterations=data["maxIterations"],
             maxTokens=data["maxTokens"],
+            maxRetrievals=None if data.get("maxRetrievals") is None else data["maxRetrievals"],
             maxCostUnits=None if data.get("maxCostUnits") is None else data["maxCostUnits"],
         )
 
@@ -1186,6 +1192,7 @@ class AgentExecutionRequestBudgets:
     maxIterations: int
     maxTokens: int
     deadline: str
+    maxRetrievals: int | None = None
     maxCostUnits: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -1194,6 +1201,8 @@ class AgentExecutionRequestBudgets:
         data["maxIterations"] = self.maxIterations
         data["maxTokens"] = self.maxTokens
         data["deadline"] = self.deadline
+        if self.maxRetrievals is not None:
+            data["maxRetrievals"] = self.maxRetrievals
         if self.maxCostUnits is not None:
             data["maxCostUnits"] = self.maxCostUnits
         return data
@@ -1205,6 +1214,7 @@ class AgentExecutionRequestBudgets:
             maxIterations=data["maxIterations"],
             maxTokens=data["maxTokens"],
             deadline=data["deadline"],
+            maxRetrievals=None if data.get("maxRetrievals") is None else data["maxRetrievals"],
             maxCostUnits=None if data.get("maxCostUnits") is None else data["maxCostUnits"],
         )
 
@@ -1341,6 +1351,7 @@ class Approval:
     createdAt: str
     decidedBy: str | None = None
     decidedAt: str | None = None
+    reRequestOf: str | None = None
     externalRef: str | None = None
     rationale: str | None = None
 
@@ -1364,6 +1375,8 @@ class Approval:
             data["decidedBy"] = self.decidedBy
         if self.decidedAt is not None:
             data["decidedAt"] = self.decidedAt
+        if self.reRequestOf is not None:
+            data["reRequestOf"] = self.reRequestOf
         if self.externalRef is not None:
             data["externalRef"] = self.externalRef
         if self.rationale is not None:
@@ -1389,6 +1402,7 @@ class Approval:
             createdAt=data["createdAt"],
             decidedBy=None if data.get("decidedBy") is None else data["decidedBy"],
             decidedAt=None if data.get("decidedAt") is None else data["decidedAt"],
+            reRequestOf=None if data.get("reRequestOf") is None else data["reRequestOf"],
             externalRef=None if data.get("externalRef") is None else data["externalRef"],
             rationale=None if data.get("rationale") is None else data["rationale"],
         )
@@ -2954,6 +2968,7 @@ class GraphAgentNodeBudgets:
 
     maxIterations: int
     maxTokens: int
+    maxRetrievals: int | None = None
     maxCostUnits: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -2961,6 +2976,8 @@ class GraphAgentNodeBudgets:
         data: dict[str, Any] = {}
         data["maxIterations"] = self.maxIterations
         data["maxTokens"] = self.maxTokens
+        if self.maxRetrievals is not None:
+            data["maxRetrievals"] = self.maxRetrievals
         if self.maxCostUnits is not None:
             data["maxCostUnits"] = self.maxCostUnits
         return data
@@ -2971,6 +2988,7 @@ class GraphAgentNodeBudgets:
         return cls(
             maxIterations=data["maxIterations"],
             maxTokens=data["maxTokens"],
+            maxRetrievals=None if data.get("maxRetrievals") is None else data["maxRetrievals"],
             maxCostUnits=None if data.get("maxCostUnits") is None else data["maxCostUnits"],
         )
 
@@ -3352,6 +3370,7 @@ class GraphNodeBudgets:
 
     maxIterations: int
     maxTokens: int
+    maxRetrievals: int | None = None
     maxCostUnits: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -3359,6 +3378,8 @@ class GraphNodeBudgets:
         data: dict[str, Any] = {}
         data["maxIterations"] = self.maxIterations
         data["maxTokens"] = self.maxTokens
+        if self.maxRetrievals is not None:
+            data["maxRetrievals"] = self.maxRetrievals
         if self.maxCostUnits is not None:
             data["maxCostUnits"] = self.maxCostUnits
         return data
@@ -3369,6 +3390,7 @@ class GraphNodeBudgets:
         return cls(
             maxIterations=data["maxIterations"],
             maxTokens=data["maxTokens"],
+            maxRetrievals=None if data.get("maxRetrievals") is None else data["maxRetrievals"],
             maxCostUnits=None if data.get("maxCostUnits") is None else data["maxCostUnits"],
         )
 
@@ -3519,6 +3541,9 @@ class GraphRun:
     epoch: int
     repositories: list[str]
     cancellationRequested: bool
+    currency: str
+    budget: GraphRunBudget
+    consumedCostUnits: int
     initiatedBy: str
     createdAt: str
     updatedAt: str
@@ -3527,6 +3552,7 @@ class GraphRun:
     workItemRef: GraphRunWorkItemRef | None = None
     workspaceId: str | None = None
     variables: dict[str, Any] | None = None
+    approvalDeadline: str | None = None
     currentNodeId: str | None = None
     latestCheckpointId: str | None = None
     completedAt: str | None = None
@@ -3544,6 +3570,9 @@ class GraphRun:
         data["epoch"] = self.epoch
         data["repositories"] = list(self.repositories)
         data["cancellationRequested"] = self.cancellationRequested
+        data["currency"] = self.currency
+        data["budget"] = self.budget.to_dict()
+        data["consumedCostUnits"] = self.consumedCostUnits
         data["initiatedBy"] = self.initiatedBy
         data["createdAt"] = self.createdAt
         data["updatedAt"] = self.updatedAt
@@ -3557,6 +3586,8 @@ class GraphRun:
             data["workspaceId"] = self.workspaceId
         if self.variables is not None:
             data["variables"] = self.variables
+        if self.approvalDeadline is not None:
+            data["approvalDeadline"] = self.approvalDeadline
         if self.currentNodeId is not None:
             data["currentNodeId"] = self.currentNodeId
         if self.latestCheckpointId is not None:
@@ -3580,6 +3611,9 @@ class GraphRun:
             epoch=data["epoch"],
             repositories=list(data["repositories"]),
             cancellationRequested=data["cancellationRequested"],
+            currency=data["currency"],
+            budget=GraphRunBudget.from_dict(data["budget"]),
+            consumedCostUnits=data["consumedCostUnits"],
             initiatedBy=data["initiatedBy"],
             createdAt=data["createdAt"],
             updatedAt=data["updatedAt"],
@@ -3588,10 +3622,41 @@ class GraphRun:
             workItemRef=None if data.get("workItemRef") is None else GraphRunWorkItemRef.from_dict(data["workItemRef"]),
             workspaceId=None if data.get("workspaceId") is None else data["workspaceId"],
             variables=None if data.get("variables") is None else data["variables"],
+            approvalDeadline=None if data.get("approvalDeadline") is None else data["approvalDeadline"],
             currentNodeId=None if data.get("currentNodeId") is None else data["currentNodeId"],
             latestCheckpointId=None if data.get("latestCheckpointId") is None else data["latestCheckpointId"],
             completedAt=None if data.get("completedAt") is None else data["completedAt"],
             failure=None if data.get("failure") is None else GraphRunFailure.from_dict(data["failure"]),
+        )
+
+
+@dataclass(frozen=True)
+class GraphRunBudget:
+    """
+    ADR-0026 §3. The run ceiling, and the only budget that is mandatory. Node and grant budgets
+    are optional and are clamped to what remains here, so the nesting is genuine containment
+    rather than four independent numbers.
+
+    Source: schemas/graph/graph-run.schema.json
+    """
+
+    maxCostUnits: int
+    maxDurationMs: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Absent optional fields are omitted, never emitted as null (ADR-0020 §3)."""
+        data: dict[str, Any] = {}
+        data["maxCostUnits"] = self.maxCostUnits
+        if self.maxDurationMs is not None:
+            data["maxDurationMs"] = self.maxDurationMs
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> GraphRunBudget:
+        """Performs no validation (ADR-0024 §4)."""
+        return cls(
+            maxCostUnits=data["maxCostUnits"],
+            maxDurationMs=None if data.get("maxDurationMs") is None else data["maxDurationMs"],
         )
 
 

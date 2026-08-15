@@ -42,6 +42,28 @@ FORBIDDEN_ALLOWLIST = {
     "docs/decisions/0007-operational-persistence-and-local-first-storage.md",
 }
 
+# Domain names retired by ADR-0019 §5. A vocabulary decision that is not mechanically checked
+# degrades within weeks, because every contributor reintroduces the name they personally find
+# natural. These are matched in prose and in schema text alike.
+RETIRED_NAMES = {
+    "GraphDefinition": "Graph",
+    "NodeExecution": "NodeRun",
+    "GraphExecution": "GraphRun",
+    "RunNode": "GraphNode",
+    "AgentRun": "NodeRun",
+    "WorkflowRun": "GraphRun",
+    "ToolDescriptor": "Tool",
+    "ApprovalRecord": "Approval",
+}
+
+# ADR-0019 itself documents the rename, and the review that motivated it quotes the old names as
+# evidence. Both would otherwise fail on their own subject matter.
+RETIRED_ALLOWLIST = {
+    "docs/decisions/0019-canonical-domain-vocabulary.md",
+    # Quotes the pre-decision key in its Context, which is the problem it exists to fix.
+    "docs/decisions/0021-noderun-identity-iteration-and-attempt.md",
+}
+
 REQUIRED_ADR_SECTIONS = ("## Context", "## Decision", "## Consequences")
 
 failures: list[str] = []
@@ -93,6 +115,15 @@ def check_forbidden_terms(path: Path, text: str) -> None:
     for term, reason in FORBIDDEN_TERMS.items():
         if re.search(rf"\b{re.escape(term)}\b", prose):
             fail(path, f"mentions '{term}' — {reason}")
+
+
+def check_retired_names(path: Path, text: str) -> None:
+    """ADR-0019 §5: retired domain names must not reappear."""
+    if str(path.relative_to(ROOT)) in RETIRED_ALLOWLIST:
+        return
+    for retired, replacement in RETIRED_NAMES.items():
+        if re.search(rf"\b{re.escape(retired)}\b", text):
+            fail(path, f"uses retired name '{retired}' — ADR-0019 §5 says use '{replacement}'")
 
 
 def check_adr_references(path: Path, text: str, known: set[str]) -> None:
@@ -166,12 +197,17 @@ def main() -> int:
         check_fences(path, text)
         check_relative_links(path, text)
         check_forbidden_terms(path, text)
+        check_retired_names(path, text)
         check_adr_references(path, text, known_adrs)
 
         if path.parent == DECISIONS and re.match(r"^\d{4}-", path.name):
             check_adr_structure(path, text)
 
     check_adr_index()
+
+    schemas = sorted((ROOT / "schemas").rglob("*.json"))
+    for path in schemas:
+        check_retired_names(path, path.read_text(encoding="utf-8"))
 
     if failures:
         print(f"doclint: {len(failures)} problem(s) across {len(files)} Markdown files\n")
@@ -180,7 +216,10 @@ def main() -> int:
         print("\nThese conventions are described in CONTRIBUTING.md.")
         return 1
 
-    print(f"doclint: {len(files)} Markdown files checked, {len(known_adrs)} ADRs, no problems found")
+    print(
+        f"doclint: {len(files)} Markdown files checked, {len(known_adrs)} ADRs, "
+        f"{len(schemas)} schema files scanned for retired names, no problems found"
+    )
     return 0
 
 

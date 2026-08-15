@@ -1,0 +1,23 @@
+{
+  "$schema": "../graph/node-run.schema.json",
+  "$comment": "Attempt 1 of iteration 1. The retry is a separate record with the same (runId, nodeId, iteration) and attempt 2 -- see node-run-retry-attempt-2.example.json. ADR-0021 \u00a72: a retry never overwrites the record it retries, because evaluation depends on seeing how a failure evolved.",
+  "schemaVersion": "1",
+  "runId": "run_01HQ8X2K4M9Z",
+  "nodeId": "verify",
+  "iteration": 1,
+  "attempt": 1,
+  "version": 2,
+  "nodeType": "tool",
+  "status": "AWAITING_RETRY",
+  "capabilityGrantId": "grant_01HQ8X2K4M",
+  "failure": {
+    "category": "TRANSIENT",
+    "message": "maven resolver timed out fetching io.quarkus:quarkus-bom",
+    "nodeId": "verify"
+  },
+  "lastFailureCategory": "TRANSIENT",
+  "nextAttemptAt": "2026-08-15T09:16:22Z",
+  "deadline": "2026-08-15T09:44:22Z",
+  "startedAt": "2026-08-15T09:14:22Z",
+  "endedAt": "2026-08-15T09:15:52Z"
+}

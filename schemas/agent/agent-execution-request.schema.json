@@ -40,7 +40,13 @@
       "properties": {
         "maxIterations": { "type": "integer", "minimum": 1 },
         "maxTokens": { "type": "integer", "minimum": 1 },
-        "maxCostUnits": { "type": "integer", "minimum": 0 },
+        "maxRetrievals": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 5,
+          "description": "ADR-0027 \u00a73. Bounds context.search calls per node attempt. Exhausting it does not fail the node \u2014 the tool reports the bound was reached and the agent proceeds with what it has, because converting a bounded resource into a run failure is worse than a slightly thinner bundle."
+        },
+        "maxCostUnits": { "$ref": "../common/common.schema.json#/$defs/costUnits" },
         "deadline": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
       },
       "required": ["maxIterations", "maxTokens", "deadline"],

@@ -1,0 +1,15 @@
+{
+  "$schema": "../graph/node-run.schema.json",
+  "$comment": "The loop node's own record. stopReason names which bound fired (ADR-0021 \u00a74), so 'the loop burned its budget' is answerable from durable state rather than from logs. The number of iterations is deliberately not stored here: it is derivable from the body's NodeRun records, and a denormalised counter can disagree with them.",
+  "schemaVersion": "1",
+  "runId": "run_01HQ8X2K4M9Z",
+  "nodeId": "repair-loop",
+  "iteration": 1,
+  "attempt": 1,
+  "version": 3,
+  "nodeType": "loop",
+  "status": "SUCCEEDED",
+  "stopReason": "EXIT_CONDITION_MET",
+  "startedAt": "2026-08-15T09:14:22Z",
+  "endedAt": "2026-08-15T09:23:41Z"
+}
