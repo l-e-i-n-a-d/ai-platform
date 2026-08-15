@@ -99,7 +99,7 @@ The resolution was agreed and the edit was interrupted mid-flight. **Four change
 Then regenerate (`codegen.py`) and re-run all four checks.
 
 **This is an amendment to ADR-0026, not a new ADR.** The conflict is a direct consequence of
-ADR-0026 and belongs inside it. Do not create ADR-0028 for it.
+ADR-0026 and belongs inside it. Do not create ADR-0028 or open a new ADR number for it.
 
 ---
 
@@ -145,7 +145,11 @@ Each was verified to fail on a deliberate regression rather than merely to pass:
 
 | Mutation | Detected by |
 |---|---|
+<<<<<<< HEAD
 | Reintroduce `NodeExecution` in a document | `doclint` |
+=======
+| Reintroduce a retired type name in a document | `doclint` |
+>>>>>>> 6a8274b (Align approvals, gateway and tool-layer docs with ADR-0023/0025/0026)
 | `"type": "number"` inside a hashed document | `schemalint`, over the transitive `$ref` closure |
 | `x-hashExclude` in a non-hashed schema | `schemalint` |
 | Rename a schema field without regenerating | `codegen --check` |
