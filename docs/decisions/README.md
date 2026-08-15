@@ -33,3 +33,36 @@ Proposed
 
 ## Follow-up
 ```
+
+---
+
+## Index
+
+Numbering follows the planned decision set below, not creation order. Gaps are intentional —
+a number is reserved when the decision is identified, and the file appears when the decision
+is taken.
+
+| # | Title | Status |
+|---|---|---|
+| 0001 | Local-first V1 execution model | Planned |
+| 0002 | Deferral of Microsoft Entra ID | Planned |
+| 0003 | Execution interface contract and executor substitutability | Planned |
+| 0004 | [Control plane / agent runtime boundary and protocol](0004-control-plane-agent-runtime-boundary.md) | **Accepted** |
+| 0005 | [Tool contract, capability grants and authorization choke point](0005-tool-contract-and-authorization-choke-point.md) | **Accepted** |
+| 0006 | Local execution isolation and credential handling | Planned |
+| [0007](0007-operational-persistence-and-local-first-storage.md) | Operational persistence and local-first storage | **Accepted** |
+| 0008 | [Graph execution semantics, versioning and durability](0008-graph-execution-semantics-and-durability.md) | **Accepted** |
+| 0009 | Human approval model and authorization without central identity | Planned |
+| 0010 | Model gateway interface and provider neutrality | Planned |
+| 0011 | Model credential management and cost control | Planned |
+| 0012 | GitHub actor identity and repository access scoping | Planned |
+| 0013 | Context bundle contract, budgets and provenance | Planned |
+| 0014 | Repository registry and instruction precedence | Planned |
+| 0015 | Observability contracts and OpenTelemetry-first instrumentation | Planned |
+| 0016 | Audit model and attribution limits without central identity | Planned |
+| 0017 | Artifact classification, retention and redaction | Planned |
+| 0018 | Developer entry surface: CLI in V1, UI deferred | Planned |
+
+Deferred questions, documented but not yet decided: eventing mechanism; Kubernetes executor;
+hosted multi-user identity; Key Vault adoption; webhook ingestion; evaluation gating
+thresholds.

@@ -77,8 +77,15 @@ The engineering organization uses:
 
 ## Data
 
-- Azure Cosmos DB
-- Azure Blob Storage
+V1:
+
+- local embedded operational store (behind the persistence port)
+- local content-addressed artifact store
+
+Future hosted deployment:
+
+- Azure Cosmos DB for operational state
+- Azure Blob Storage for large artifacts
 
 ## Optional Azure Services
 
@@ -130,7 +137,7 @@ If a future requirement appears to justify one of them, document the architectur
 
 For event-driven behavior, prefer the simplest mechanism that satisfies the demonstrated requirement.
 
-Cosmos DB Change Feed may be considered where appropriate.
+Do not rely on store-side eventing such as Cosmos DB Change Feed: the persistence port is deliberately restricted to the intersection of an embedded store and Cosmos DB (see ADR-0007).
 
 Azure Service Bus may be considered if durable messaging semantics are actually required.
 
@@ -235,14 +242,14 @@ The V1 platform consists conceptually of:
 Supporting services:
 
 ```text
-Cosmos DB
-    → operational state
+Local operational store
+    → durable run and workflow state
 
-Blob Storage
+Local artifact store
     → large artifacts
 
-Key Vault
-    → optional future centralized secret management
+Cosmos DB / Blob Storage / Key Vault
+    → future hosted deployment only, not V1
 ```
 
 The V1 platform should minimize infrastructure requirements and maximize developer portability.
@@ -353,7 +360,7 @@ The platform should eventually survive:
 - human approval pauses
 - long-running workflows
 
-Cosmos DB is the initial durable state store.
+The V1 durable state store is local and embedded, accessed through the persistence port. Cosmos DB is a future hosted-deployment adapter behind the same port (ADR-0007).
 
 The execution model must support:
 
@@ -460,6 +467,12 @@ Tools must have:
 - clear side-effect semantics
 - idempotency where applicable
 
+All tool invocation passes through a single control-plane tool layer. There is no other path to a side effect. Tools are never implemented in the agent runtime.
+
+Capabilities are granted per node attempt, are derived from the graph definition and repository registry (never from model output), and cannot escalate.
+
+Do not create a tool that accepts a shell string or free-form argv from a model. Command execution is limited to named, repository-declared command profiles with typed parameters and no shell. See ADR-0005.
+
 Prefer read-only capabilities by default.
 
 Write/destructive capabilities should require stronger authorization and potentially human approval.
@@ -533,9 +546,14 @@ Do not leak Kubernetes concepts into graph definitions or agent logic.
 
 # 16. Persistence
 
-Use Azure Cosmos DB for platform operational state.
+All persistence is accessed through a persistence port. No component outside the persistence
+adapters may reference a storage SDK type.
 
-Potential state includes:
+V1 uses a local embedded operational store and a local content-addressed artifact store.
+Cosmos DB and Blob Storage are a future hosted-deployment target, not a V1 requirement.
+See ADR-0007 (`docs/decisions/0007-operational-persistence-and-local-first-storage.md`).
+
+Operational state includes:
 
 - work items
 - graph definitions
@@ -543,14 +561,16 @@ Potential state includes:
 - graph nodes
 - agent executions
 - checkpoints
+- leases
 - approvals
 - tool executions
 - model invocations
+- idempotency records
 - policies
 - evaluation results
 - execution metadata
 
-Use Azure Blob Storage for large artifacts such as:
+Large artifacts belong in the artifact store, referenced from operational state:
 
 - large logs
 - generated reports
@@ -559,7 +579,11 @@ Use Azure Blob Storage for large artifacts such as:
 - build artifacts
 - evaluation artifacts
 
-Do not store unnecessarily large payloads directly in Cosmos DB.
+Do not store unnecessarily large payloads in the operational store — offload above 100 KB.
+
+Keep the persistence port within the intersection of an embedded store and Cosmos DB: no
+change feed, stored procedures, cross-partition transactions, server-side joins or
+unindexed queries.
 
 Do not introduce another database without an architectural decision.
 

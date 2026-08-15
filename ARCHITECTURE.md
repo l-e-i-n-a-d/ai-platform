@@ -75,15 +75,16 @@ Local AI Engineering Platform
 Supporting persistence:
 
 ```text
-Azure Cosmos DB
-    -> operational state
+Local operational store
+    -> durable run and workflow state
 
-Azure Blob Storage
-    -> large artifacts
-
-Azure Key Vault
-    -> optional future centralized secret management
+Local artifact store
+    -> large artifacts (transcripts, diffs, logs)
 ```
+
+V1 persistence is local and requires no cloud account. Azure Cosmos DB and Azure Blob Storage
+are the documented target for a future hosted deployment, not V1 components.
+See [ADR-0007](docs/decisions/0007-operational-persistence-and-local-first-storage.md).
 
 ---
 
@@ -105,9 +106,17 @@ Responsible for:
 
 It must not become an unrestricted command execution environment.
 
+Two invariants define the architecture:
+
+1. All durable state transitions are written by the control plane.
+2. All tool invocations pass through the control-plane tool layer.
+
+See [ADR-0004](docs/decisions/0004-control-plane-agent-runtime-boundary.md).
+
 ### Python Agent Runtime
 
-Responsible for constrained agent execution.
+Executes exactly **one node attempt** of one agent, then returns. It is stateless and freely
+restartable; killing it costs at most one attempt.
 
 Agents have explicit:
 
@@ -121,11 +130,16 @@ Agents have explicit:
 - timeouts
 - output contracts
 
+The runtime holds no durable state, no provider or integration credentials, and no network
+egress other than back to the control plane. It receives tool *descriptors*, not
+implementations. The control plane validates its output rather than trusting it.
+
 ### Graph Engine
 
-Represents workflows as explicit, versioned execution graphs.
+Represents workflows as explicit, versioned execution graphs, and is the **sole orchestrator**
+— no agent, tool or runtime advances a run.
 
-Potential capabilities:
+Capabilities:
 
 - sequence
 - branching
@@ -137,7 +151,13 @@ Potential capabilities:
 - recovery
 - resumability
 
+Definitions are declarative, immutable and content-addressed; a run pins its definition for
+its whole life. The node taxonomy is closed, and edge conditions are a restricted language
+over validated structured output. Only the holder of the run lease may transition state, and
+each transition is a single atomic write.
+
 Graphs are workflow semantics, not a requirement for a graph database.
+See [ADR-0008](docs/decisions/0008-graph-execution-semantics-and-durability.md).
 
 ### Context Engine
 
@@ -167,7 +187,9 @@ Provider-specific SDK details remain behind the gateway.
 
 ### Tool Layer
 
-Exposes controlled capabilities to agents.
+The single path through which any side effect occurs, and therefore the platform's
+authorization choke point: registry, schema validation, capability-grant authorization, scope
+enforcement, approval gating, idempotency, write-ahead intent, dispatch and audit.
 
 Examples:
 
@@ -181,6 +203,11 @@ Examples:
 - Confluence
 - CI
 - Kubernetes inspection for future deployments
+
+Capabilities are granted per node attempt and cannot escalate. Models never author commands:
+command execution is limited to named, repository-declared command profiles with typed
+parameters and no shell.
+See [ADR-0005](docs/decisions/0005-tool-contract-and-authorization-choke-point.md).
 
 ### Local Executor
 
@@ -210,25 +237,39 @@ Kubernetes-specific concerns must remain inside the Kubernetes executor.
 
 ## 4. Persistence
 
-Cosmos DB is the operational state store.
+All persistence is accessed through a **persistence port**. No component outside the
+persistence adapters may reference a storage SDK type.
 
-Potential data:
+**V1:** an embedded local operational store (SQLite) and a content-addressed local artifact
+store. No cloud account, container runtime or emulator is required.
+
+Operational state:
 
 - work items
 - graph definitions
 - graph runs
 - nodes
 - checkpoints
+- leases
 - agent executions
 - tool executions
 - model invocations
 - approvals
+- idempotency records
 - policies
 - evaluation results
 
-Blob Storage is for large artifacts.
+Large artifacts — transcripts, diffs, build and CI logs, reports — are written to the
+artifact store and referenced from operational state. Any payload above 100 KB is offloaded.
 
-Do not introduce PostgreSQL.
+**Future (hosted deployment):** Azure Cosmos DB and Azure Blob Storage adapters, implemented
+when a shared operational store is demonstrably required. That decision is coupled to the
+identity decision and must be taken together with it.
+
+See [docs/architecture/persistence.md](docs/architecture/persistence.md) and
+[ADR-0007](docs/decisions/0007-operational-persistence-and-local-first-storage.md).
+
+Do not introduce PostgreSQL, and do not introduce another store without an ADR.
 
 ---
 

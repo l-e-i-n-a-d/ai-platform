@@ -82,6 +82,16 @@ Control Plane
 
 Do not collapse these responsibilities without an explicit architectural reason.
 
+Two invariants (ADR-0004):
+
+1. All durable state transitions are written by the control plane.
+2. All tool invocations pass through the control-plane tool layer.
+
+The Python agent runtime executes one node attempt at a time. It is stateless and holds no
+durable state, no credentials and no network egress other than back to the control plane. It
+receives tool descriptors, never implementations. The graph engine is the sole orchestrator
+(ADR-0008).
+
 ---
 
 ## Model Providers
@@ -107,12 +117,19 @@ Do not recreate these systems inside the platform.
 
 ## Persistence
 
-Use:
+Access all storage through the persistence port. Never reference a storage SDK type outside
+a persistence adapter.
 
-- Cosmos DB for operational state
-- Blob Storage for large artifacts
+V1:
 
-Do not introduce another database without an ADR.
+- local embedded operational store for durable state
+- local content-addressed artifact store for large artifacts
+
+Future hosted deployment:
+
+- Cosmos DB and Blob Storage adapters behind the same port
+
+See ADR-0007. Do not introduce another database without an ADR.
 
 ---
 

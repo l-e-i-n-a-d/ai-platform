@@ -9,11 +9,12 @@ The platform is intended to connect:
 - Jira for work management
 - Confluence for product and engineering knowledge
 - GitHub for source code, pull requests and CI/CD
-- Azure / AKS for execution
-- Cosmos DB for operational state
-- Blob Storage for large artifacts
-- Key Vault for security
+- local execution and local persistence in V1
 - Claude and GPT through a provider-neutral model gateway
+
+Azure services (Cosmos DB, Blob Storage, AKS, Key Vault) are the documented target for a
+future hosted deployment. They are not V1 requirements — V1 runs entirely on a developer's
+machine. See [ADR-0007](docs/decisions/0007-operational-persistence-and-local-first-storage.md).
 
 ## Repository
 

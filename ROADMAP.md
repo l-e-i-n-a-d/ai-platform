@@ -27,8 +27,8 @@ Goals:
 - model gateway
 - basic graph execution
 - local executor
-- Cosmos DB persistence
-- Blob Storage artifact handling
+- local persistence (see ADR-0007)
+- local artifact storage
 - basic Jira integration
 - basic Confluence integration
 - basic GitHub integration
@@ -149,8 +149,12 @@ At this point revisit:
 - authentication
 - authorization
 - multi-user tenancy
+- shared operational persistence (Cosmos DB / Blob Storage adapters)
 - centralized secret management
 - execution scheduling
 - operational ownership
 
 Microsoft Entra ID is intentionally deferred rather than assumed.
+
+Shared persistence and centralized identity must be decided together: a shared operational
+store without identity-bound access reintroduces the problem ADR-0007 was written to remove.
