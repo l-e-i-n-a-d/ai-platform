@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/graph-definition.schema.json",
+  "title": "GraphDefinition",
+  "description": "A workflow, expressed as declarative data (ADR-0008 §1). Contains no code and no expressions beyond the restricted condition language. Definitions are immutable and content-addressed: editing produces a new version identified by the content hash of its canonical form, and a run pins the version it started with for its entire life. ADR-0008 §16: graphs are authored by humans. An agent may propose a definition as a reviewable artifact, but no agent may author, mutate or select a definition for a live run.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "graphId": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$" },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "entryNodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "variables": {
+      "type": "object",
+      "description": "Declared run variables with their JSON Schema. Undeclared variables cannot be referenced by conditions.",
+      "additionalProperties": { "$ref": "../common/common.schema.json#/$defs/jsonSchema" }
+    },
+    "defaultRetryPolicy": { "$ref": "#/$defs/retryPolicy" },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" },
+      "minItems": 1
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    }
+  },
+  "required": ["schemaVersion", "graphId", "title", "entryNodeId", "nodes", "edges"],
+  "additionalProperties": false,
+  "$defs": {
+    "retryPolicy": {
+      "type": "object",
+      "description": "ADR-0008 §11. Policy lives in the definition and is therefore versioned and pinned; retry state lives on the node. Retry is driven by category, never by message text.",
+      "properties": {
+        "maxAttempts": { "type": "integer", "minimum": 1 },
+        "backoff": {
+          "type": "object",
+          "properties": {
+            "strategy": { "type": "string", "enum": ["FIXED", "EXPONENTIAL"] },
+            "initialDelayMs": { "type": "integer", "minimum": 0 },
+            "maxDelayMs": { "type": "integer", "minimum": 0 },
+            "jitter": { "type": "boolean" }
+          },
+          "required": ["strategy", "initialDelayMs"],
+          "additionalProperties": false
+        },
+        "retryableCategories": {
+          "type": "array",
+          "description": "INDETERMINATE is deliberately excluded from the permitted values: ADR-0008 §7 states it is never auto-retried, because a side effect may or may not have occurred. It is resolved by reconciliation or escalated to a human.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "TRANSIENT",
+              "MODEL_ERROR",
+              "BUDGET_EXCEEDED",
+              "INVALID_OUTPUT",
+              "TOOL_DENIED",
+              "VERIFICATION_FAILED",
+              "EXECUTION_ERROR",
+              "INTEGRATION_ERROR"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": ["maxAttempts", "backoff", "retryableCategories"],
+      "additionalProperties": false
+    },
+    "node": {
+      "description": "ADR-0008 §3 defines a closed node taxonomy. Adding a node type requires an ADR, so this list is intentionally exhaustive.",
+      "oneOf": [
+        { "$ref": "#/$defs/contextNode" },
+        { "$ref": "#/$defs/agentNode" },
+        { "$ref": "#/$defs/toolNode" },
+        { "$ref": "#/$defs/approvalNode" },
+        { "$ref": "#/$defs/decisionNode" },
+        { "$ref": "#/$defs/loopNode" },
+        { "$ref": "#/$defs/terminalNode" }
+      ]
+    },
+    "contextNode": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "type": { "const": "context" },
+        "title": { "type": "string" },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "retryPolicy": { "$ref": "#/$defs/retryPolicy" },
+        "contextPolicyId": { "type": "string", "minLength": 1 },
+        "tokenBudget": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["id", "type", "contextPolicyId", "tokenBudget"],
+      "additionalProperties": false
+    },
+    "agentNode": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "type": { "const": "agent" },
+        "title": { "type": "string" },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "retryPolicy": { "$ref": "#/$defs/retryPolicy" },
+        "agentId": { "type": "string", "minLength": 1 },
+        "objective": { "type": "string", "minLength": 1 },
+        "outputSchema": {
+          "$ref": "../common/common.schema.json#/$defs/jsonSchema",
+          "description": "ADR-0008 §5: a transition is evaluated only on output validated against this schema. Workflow control never depends on prose."
+        },
+        "requestedCapabilities": {
+          "type": "object",
+          "description": "What this node asks for. The effective grant is the intersection of this with the registry ceiling and platform policy (ADR-0014 §5); a node can only narrow, never widen.",
+          "properties": {
+            "allowedTools": {
+              "type": "array",
+              "items": { "$ref": "../common/common.schema.json#/$defs/toolId" },
+              "uniqueItems": true
+            },
+            "maxSideEffect": { "$ref": "../common/common.schema.json#/$defs/sideEffectClass" },
+            "commandProfiles": {
+              "type": "array",
+              "items": { "type": "string" },
+              "uniqueItems": true
+            }
+          },
+          "required": ["allowedTools", "maxSideEffect"],
+          "additionalProperties": false
+        },
+        "budgets": {
+          "type": "object",
+          "properties": {
+            "maxIterations": { "type": "integer", "minimum": 1 },
+            "maxTokens": { "type": "integer", "minimum": 1 },
+            "maxCostUnits": { "type": "number", "minimum": 0 }
+          },
+          "required": ["maxIterations", "maxTokens"],
+          "additionalProperties": false
+        },
+        "modelPolicy": {
+          "type": "object",
+          "properties": {
+            "selector": { "type": "string" },
+            "modelRef": { "type": "string" }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
+        }
+      },
+      "required": ["id", "type", "agentId", "objective", "outputSchema", "requestedCapabilities", "budgets"],
+      "additionalProperties": false
+    },
+    "toolNode": {
+      "type": "object",
+      "description": "A deterministic side effect. Exactly one tool, fixed in the definition. This is the escape hatch for behaviour the condition language cannot express (ADR-0008 Consequences).",
+      "properties": {
+        "id": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "type": { "const": "tool" },
+        "title": { "type": "string" },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "retryPolicy": { "$ref": "#/$defs/retryPolicy" },
+        "toolId": { "$ref": "../common/common.schema.json#/$defs/toolId" },
+        "toolVersion": { "$ref": "../common/common.schema.json#/$defs/semver" },
+        "input": {
+          "type": "object",
+          "description": "Literal values and references into validated prior node output. No model text."
+        }
+      },
+      "required": ["id", "type", "toolId", "toolVersion", "input"],
+      "additionalProperties": false
+    },
+    "approvalNode": {
+      "type": "object",
+      "description": "A durable pause (ADR-0008 §13). The engine writes AWAITING_APPROVAL, releases the lease and stops; nothing is held in memory.",
+      "properties": {
+        "id": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "type": { "const": "approval" },
+        "title": { "type": "string" },
+        "requiredKind": {
+          "type": "string",
+          "enum": ["LOCAL_OPERATOR_CONSENT", "EXTERNAL_ATTESTATION"]
+        },
+        "subjectRef": {
+          "type": "string",
+          "description": "What is being approved. The approval binds to the content hash of this subject and is re-verified on resume, so an approval of one thing cannot authorise another."
+        },
+        "expiresAfterMs": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["id", "type", "requiredKind", "subjectRef", "expiresAfterMs"],
+      "additionalProperties": false
+    },
+    "decisionNode": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "type": { "const": "decision" },
+        "title": { "type": "string" }
+      },
+      "required": ["id", "type"],
+      "additionalProperties": false
+    },
+    "loopNode": {
+      "type": "object",
+      "description": "ADR-0008 §12: bounded, with a deterministic exit. A model may not decide that a loop is finished; a deterministic verification step decides. This is the repair loop the platform exists to run, and also the failure mode most likely to burn a day's budget in ten minutes.",
+      "properties": {
+        "id": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "type": { "const": "loop" },
+        "title": { "type": "string" },
+        "bodyNodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "maxIterations": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "exitCondition": { "$ref": "condition.schema.json" }
+      },
+      "required": ["id", "type", "bodyNodeId", "maxIterations", "exitCondition"],
+      "additionalProperties": false
+    },
+    "terminalNode": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "type": { "const": "terminal" },
+        "title": { "type": "string" },
+        "outcome": { "type": "string", "enum": ["SUCCEEDED", "FAILED"] }
+      },
+      "required": ["id", "type", "outcome"],
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "properties": {
+        "from": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "to": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "condition": {
+          "$ref": "condition.schema.json",
+          "description": "Omitted means unconditional. Conditions out of a single node must be exhaustive, so that evaluation is total."
+        }
+      },
+      "required": ["from", "to"],
+      "additionalProperties": false
+    }
+  }
+}

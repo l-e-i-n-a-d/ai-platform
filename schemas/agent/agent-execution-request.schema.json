@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/agent/agent-execution-request.schema.json",
+  "title": "AgentExecutionRequest",
+  "description": "POST /v1/agent-executions, control plane to agent runtime (ADR-0004 §11). One call, exactly one node attempt. The runtime never selects the next node, never decides to retry, never branches and never schedules work; all workflow control lives in the graph engine.",
+  "type": "object",
+  "properties": {
+    "protocolVersion": {
+      "const": "1",
+      "description": "Incompatible versions fail fast at startup rather than at the first interesting node."
+    },
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" },
+    "traceparent": { "$ref": "../common/common.schema.json#/$defs/traceparent" },
+    "agentId": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "instructions": {
+      "type": "array",
+      "description": "Platform-authored instruction blocks. ADR-0004 Security Impact: untrusted content must never be placed here. Repository, issue and page content reaches the model through the context bundle, as data.",
+      "items": { "type": "string" }
+    },
+    "contextBundleRef": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "Fetched by reference via GET /v1/context-bundles/{ref}, not inlined. Costs a round trip per node attempt; keeps the request small and the bundle content-addressed."
+    },
+    "toolDescriptors": {
+      "type": "array",
+      "description": "Descriptors only — no implementations, no endpoints, no credentials. The runtime cannot invoke a tool except through the callback.",
+      "items": { "$ref": "../tools/tool-descriptor.schema.json" }
+    },
+    "outputSchema": { "$ref": "../common/common.schema.json#/$defs/jsonSchema" },
+    "budgets": {
+      "type": "object",
+      "properties": {
+        "maxIterations": { "type": "integer", "minimum": 1 },
+        "maxTokens": { "type": "integer", "minimum": 1 },
+        "maxCostUnits": { "type": "number", "minimum": 0 },
+        "deadline": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+      },
+      "required": ["maxIterations", "maxTokens", "deadline"],
+      "additionalProperties": false
+    },
+    "modelPolicy": {
+      "type": "object",
+      "properties": {
+        "selector": { "type": "string" },
+        "modelRef": { "type": "string" }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "callbackToken": {
+      "type": "string",
+      "description": "Bound to (runId, nodeId, attempt) and valid until the attempt deadline. ADR-0004 §10: this token is the bearer of the capability grant — the tool layer resolves the grant from the token, so the runtime cannot widen its own authority by asking differently. Single-attempt; a retry gets a new token and a new grant.",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "protocolVersion",
+    "runId",
+    "nodeId",
+    "attempt",
+    "agentId",
+    "objective",
+    "instructions",
+    "contextBundleRef",
+    "toolDescriptors",
+    "outputSchema",
+    "budgets",
+    "callbackToken"
+  ],
+  "additionalProperties": false
+}

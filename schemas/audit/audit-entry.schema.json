@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/audit/audit-entry.schema.json",
+  "title": "AuditEntry",
+  "description": "An append-only record of an attempted consequential action (ADR-0016). Written fail-closed: if the entry cannot be persisted, the action does not proceed. Retained independently of telemetry — traces may be sampled and logs may be dropped, audit may not. ADR-0016 is explicit about the limits of what V1 can attest to; see the assurance field.",
+  "type": "object",
+  "properties": {
+    "auditId": { "type": "string", "minLength": 1 },
+    "sequence": {
+      "type": "integer",
+      "description": "Monotonic within the run. Gaps are detectable and are themselves a finding.",
+      "minimum": 0
+    },
+    "timestamp": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" },
+    "graphId": { "type": "string" },
+    "graphVersionHash": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+    "agentId": { "type": "string" },
+    "action": { "type": "string", "minLength": 1 },
+    "subjectRef": { "type": "string" },
+    "subjectHash": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+    "sideEffectClass": { "$ref": "../common/common.schema.json#/$defs/sideEffectClass" },
+    "capabilityGrantId": { "type": "string" },
+    "decision": {
+      "type": "string",
+      "description": "INDETERMINATE records that a write-ahead intent exists with no matching outcome. It is the only honest answer available after a crash mid-side-effect, and ADR-0008 §7 forbids auto-retrying it.",
+      "enum": ["ALLOWED", "DENIED", "INDETERMINATE"]
+    },
+    "reason": { "type": "string" },
+    "assurance": {
+      "type": "string",
+      "description": "ADR-0016 §3. SELF_ASSERTED: the platform states it about itself and a local attacker could forge it. PLATFORM_ATTESTED: produced by a control-plane component and hash-chained. EXTERNALLY_VERIFIABLE: corroborated by a system outside this machine, such as a GitHub commit or a Jira transition. V1 is developer-attested and is not adversarial-grade; the field exists so that nobody later mistakes it for something stronger.",
+      "enum": ["SELF_ASSERTED", "PLATFORM_ATTESTED", "EXTERNALLY_VERIFIABLE"]
+    },
+    "actor": {
+      "type": "object",
+      "properties": {
+        "localUser": {
+          "type": "string",
+          "description": "Self-asserted (ADR-0016 §4). Without central identity this is a claim, not a proof, and is recorded as such."
+        },
+        "platformInstanceId": { "type": "string" },
+        "externalIdentity": {
+          "type": "string",
+          "description": "GitHub App installation, Jira account, where one applies. This is the part of the actor that another system can corroborate."
+        },
+        "initiatedBy": {
+          "type": "string",
+          "description": "The developer who started the run, carried through every entry so that an action is attributable to a person even when performed by an agent several nodes later."
+        }
+      },
+      "required": ["localUser", "platformInstanceId", "initiatedBy"],
+      "additionalProperties": false
+    },
+    "externalRef": {
+      "type": "string",
+      "description": "Pull request number, commit SHA, issue key, page version. The anchor that makes an entry externally verifiable."
+    },
+    "traceId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+    "spanId": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+    "prevHash": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "Hash chain (ADR-0016 §5). Tamper-evident, not tamper-proof: an attacker with write access can rewrite the whole chain. Local signing was rejected because the key would sit on the same machine as the subject, which would make the guarantee look stronger than it is."
+    },
+    "entryHash": { "$ref": "../common/common.schema.json#/$defs/sha256" }
+  },
+  "required": [
+    "auditId",
+    "sequence",
+    "timestamp",
+    "runId",
+    "action",
+    "decision",
+    "assurance",
+    "actor",
+    "prevHash",
+    "entryHash"
+  ],
+  "additionalProperties": false
+}

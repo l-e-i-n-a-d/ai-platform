@@ -22,3 +22,22 @@ jobs:
       # The script uses the standard library only, so there is nothing to install.
       - name: Check documentation consistency
         run: python3 .github/scripts/doclint.py
+
+  schemas:
+    name: Contract schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Structural checks need no dependencies, but metaschema and example validation do.
+      # Installing it here means the invalid/ examples are always actually exercised;
+      # schemalint skips them with a notice rather than passing silently if it is absent.
+      - name: Install validation dependencies
+        run: python3 -m pip install --quiet 'jsonschema>=4.18'
+
+      - name: Check contract schemas
+        run: python3 .github/scripts/schemalint.py

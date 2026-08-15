@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/execution/execution-request.schema.json",
+  "title": "ExecutionRequest",
+  "description": "Submitted to the execution interface (ADR-0003 §4). The shape encodes the six substitutability rules of ADR-0003 §3: argv arrays rather than shell strings, an explicit environment allowlist rather than inheritance, artifact references rather than paths, and mandatory timeout, limits and network policy.",
+  "type": "object",
+  "properties": {
+    "argv": {
+      "type": "array",
+      "description": "Fully resolved argument vector. ADR-0005 §5: this is produced by the platform from a named command profile. A model never authors it, and no shell is involved at any layer.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "cwd": {
+      "type": "string",
+      "description": "Workspace-relative working directory, validated against the grant's pathScope. Absolute paths are rejected: ADR-0003 §3 forbids any host path crossing this boundary.",
+      "pattern": "^(?!/)(?!.*\\.\\.).*$"
+    },
+    "envAllowlist": {
+      "type": "object",
+      "description": "Explicit key/value pairs. Nothing is inherited from the host environment, which is what stops ambient developer credentials reaching executed commands.",
+      "patternProperties": {
+        "^[A-Z_][A-Z0-9_]*$": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "timeoutMs": { "type": "integer", "minimum": 1 },
+    "resourceLimits": { "$ref": "../common/common.schema.json#/$defs/resourceLimits" },
+    "networkPolicy": { "$ref": "../common/common.schema.json#/$defs/networkPolicy" },
+    "stdinRef": { "$ref": "../artifacts/artifact-ref.schema.json" },
+    "correlation": { "$ref": "../common/common.schema.json#/$defs/correlation" }
+  },
+  "required": ["argv", "cwd", "envAllowlist", "timeoutMs", "resourceLimits", "networkPolicy", "correlation"],
+  "additionalProperties": false
+}

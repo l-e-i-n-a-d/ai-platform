@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/model/model-request.schema.json",
+  "title": "ModelRequest",
+  "description": "The provider-neutral request accepted by the model gateway (ADR-0010 §1). Provider-specific SDK calls live behind the gateway and nowhere else. ADR-0010 §2: the gateway does not run the tool-calling loop — it normalises tool calls into requests, and the tool layer decides and executes. Most agent frameworks do run the loop in this position, so this is the default to resist.",
+  "type": "object",
+  "properties": {
+    "modelRef": {
+      "type": "string",
+      "description": "A logical name resolved by the gateway, not a provider model id. Callers never name a provider model directly.",
+      "minLength": 1
+    },
+    "system": {
+      "type": "array",
+      "description": "Platform-authored instruction blocks. Never assembled from retrieved content.",
+      "items": { "type": "string" }
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string", "enum": ["USER", "ASSISTANT", "TOOL_RESULT"] },
+          "content": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/contentBlock" },
+            "minItems": 1
+          },
+          "toolCallId": {
+            "type": "string",
+            "description": "Present on TOOL_RESULT messages, correlating to the originating tool call."
+          }
+        },
+        "required": ["role", "content"],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "tools": {
+      "type": "array",
+      "description": "Derived from tool descriptors the grant permits. The gateway advertises tools; it does not hold or invoke them.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "inputSchema": { "$ref": "../common/common.schema.json#/$defs/jsonSchema" }
+        },
+        "required": ["name", "description", "inputSchema"],
+        "additionalProperties": false
+      }
+    },
+    "toolChoice": {
+      "oneOf": [
+        { "type": "string", "enum": ["AUTO", "REQUIRED", "NONE"] },
+        {
+          "type": "object",
+          "properties": { "name": { "type": "string" } },
+          "required": ["name"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "outputContract": {
+      "$ref": "../common/common.schema.json#/$defs/jsonSchema",
+      "description": "Required when the caller needs a structured result."
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+        "topP": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maxOutputTokens": { "type": "integer", "minimum": 1 },
+        "stopSequences": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "budgets": {
+      "type": "object",
+      "properties": {
+        "maxInputTokens": { "type": "integer", "minimum": 1 },
+        "maxOutputTokens": { "type": "integer", "minimum": 1 },
+        "timeoutMs": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["maxInputTokens", "maxOutputTokens", "timeoutMs"],
+      "additionalProperties": false
+    },
+    "providerOptions": {
+      "type": "object",
+      "description": "A narrow, explicitly-labelled escape hatch (ADR-0010 §4). Anything placed here is by definition not portable across providers, and the name says so.",
+      "properties": {
+        "provider": { "type": "string" },
+        "options": { "type": "object" }
+      },
+      "required": ["provider", "options"],
+      "additionalProperties": false
+    },
+    "correlation": { "$ref": "../common/common.schema.json#/$defs/correlation" }
+  },
+  "required": ["modelRef", "system", "messages", "budgets", "correlation"],
+  "additionalProperties": false,
+  "$defs": {
+    "contentBlock": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "TEXT" },
+            "text": { "type": "string" }
+          },
+          "required": ["type", "text"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "ARTIFACT" },
+            "ref": { "$ref": "../artifacts/artifact-ref.schema.json" }
+          },
+          "required": ["type", "ref"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

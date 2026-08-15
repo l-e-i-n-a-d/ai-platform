@@ -1,0 +1,26 @@
+{
+  "$schema": "../execution/execution-request.schema.json",
+  "argv": ["mvn", "-B", "-ntp", "test"],
+  "cwd": "services/order-service",
+  "envAllowlist": {
+    "MAVEN_OPTS": "-Xmx2g",
+    "CI": "true"
+  },
+  "timeoutMs": 900000,
+  "resourceLimits": {
+    "cpuMillis": 4000,
+    "memoryBytes": 4294967296,
+    "pids": 512,
+    "diskBytes": 10737418240
+  },
+  "networkPolicy": {
+    "mode": "ALLOWLIST",
+    "hosts": ["repo.maven.apache.org", "repo1.maven.org"]
+  },
+  "correlation": {
+    "runId": "run_01HQ8X2K4M9Z",
+    "nodeId": "verify",
+    "attempt": 1,
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+  }
+}

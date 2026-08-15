@@ -1,0 +1,16 @@
+{
+  "$schema": "../../graph/graph-definition.schema.json",
+  "$expect": "ADR-0008 §7: INDETERMINATE is never auto-retried, because a side effect may or may not have occurred. Retrying it is how a platform posts two pull requests for one issue.",
+  "$expectKeyword": "enum",
+  "schemaVersion": "1",
+  "graphId": "bad-retry",
+  "title": "Retries an indeterminate side effect",
+  "entryNodeId": "done",
+  "defaultRetryPolicy": {
+    "maxAttempts": 3,
+    "backoff": { "strategy": "FIXED", "initialDelayMs": 1000 },
+    "retryableCategories": ["TRANSIENT", "INDETERMINATE"]
+  },
+  "nodes": [{ "id": "done", "type": "terminal", "outcome": "SUCCEEDED" }],
+  "edges": []
+}

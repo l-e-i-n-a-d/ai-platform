@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/tools/tool-descriptor.schema.json",
+  "title": "ToolDescriptor",
+  "description": "The declared contract of a tool (ADR-0005 §2). Descriptors are data and are immutable per version. The agent runtime holds descriptors only, never implementations, and cannot invoke a tool by any path other than the control-plane choke point.",
+  "type": "object",
+  "properties": {
+    "id": { "$ref": "../common/common.schema.json#/$defs/toolId" },
+    "version": { "$ref": "../common/common.schema.json#/$defs/semver" },
+    "title": { "type": "string", "minLength": 1 },
+    "description": {
+      "type": "string",
+      "description": "Model-facing. This text reaches the model, so it is platform-authored and never assembled from repository or issue content.",
+      "minLength": 1
+    },
+    "inputSchema": {
+      "description": "An embedded JSON Schema document that MUST itself be closed. ADR-0005 §2: anything not declared is rejected rather than ignored, so a model cannot smuggle undeclared fields past validation into an integration client. The requirement is expressed here by demanding the literal key 'additionalProperties': false in the embedded document.",
+      "type": "object",
+      "properties": {
+        "additionalProperties": { "const": false }
+      },
+      "required": ["additionalProperties"],
+      "additionalProperties": true
+    },
+    "outputSchema": { "$ref": "../common/common.schema.json#/$defs/jsonSchema" },
+    "sideEffectClass": { "$ref": "../common/common.schema.json#/$defs/sideEffectClass" },
+    "scopeRequirements": {
+      "type": "object",
+      "description": "Which scopes a grant must contain for this tool to be invocable.",
+      "properties": {
+        "repository": { "type": "boolean" },
+        "path": { "type": "boolean" },
+        "externalProject": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "idempotency": {
+      "type": "string",
+      "description": "NATURAL: the external system deduplicates, or a natural key exists. KEYED: requires a platform-derived idempotency key. NONE: only permissible for READ.",
+      "enum": ["NATURAL", "KEYED", "NONE"]
+    },
+    "approvalPolicy": {
+      "type": "object",
+      "description": "ADR-0005 §2. IRREVERSIBLE tools always require approval regardless of this field; policy may strengthen the requirement but never weaken it.",
+      "oneOf": [
+        {
+          "properties": { "mode": { "enum": ["NEVER", "ALWAYS"] } },
+          "required": ["mode"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "mode": { "const": "CONDITIONAL" },
+            "predicate": {
+              "$ref": "../graph/condition.schema.json",
+              "description": "Evaluated over validated tool input only, never over model prose."
+            }
+          },
+          "required": ["mode", "predicate"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "timeoutMs": { "type": "integer", "minimum": 1 },
+    "costHint": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH"]
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "title",
+    "description",
+    "inputSchema",
+    "outputSchema",
+    "sideEffectClass",
+    "idempotency",
+    "approvalPolicy",
+    "timeoutMs"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "sideEffectClass": { "enum": ["EXTERNAL_WRITE", "IRREVERSIBLE"] } },
+        "required": ["sideEffectClass"]
+      },
+      "then": {
+        "properties": { "idempotency": { "enum": ["NATURAL", "KEYED"] } },
+        "description": "ADR-0005 §3: EXTERNAL_WRITE and IRREVERSIBLE require an idempotency key. The platform must be able to run the same node twice and leave one branch, one pull request and one comment."
+      }
+    },
+    {
+      "if": {
+        "properties": { "sideEffectClass": { "const": "IRREVERSIBLE" } },
+        "required": ["sideEffectClass"]
+      },
+      "then": {
+        "properties": { "approvalPolicy": { "properties": { "mode": { "const": "ALWAYS" } } } },
+        "description": "ADR-0005 §3: IRREVERSIBLE always requires human approval. Class is declared on the tool and is not negotiable per call."
+      }
+    }
+  ]
+}

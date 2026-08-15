@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/model/model-response.schema.json",
+  "title": "ModelResponse",
+  "description": "The provider-neutral response produced by the model gateway (ADR-0010 §1). Usage and cost recorded here are the gateway's own measurements and are authoritative: ADR-0004 §9 forbids taking them from the agent runtime's summary.",
+  "type": "object",
+  "properties": {
+    "modelInvocationId": { "type": "string", "minLength": 1 },
+    "content": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": { "const": "TEXT" },
+              "text": { "type": "string" }
+            },
+            "required": ["type", "text"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "const": "TOOL_CALL" },
+              "toolCallId": { "type": "string" }
+            },
+            "required": ["type", "toolCallId"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "toolCalls": {
+      "type": "array",
+      "description": "Normalised from provider-native tool-use formats. These are requests only; nothing here has been authorised or executed. ADR-0005 §7 runs every one through the choke point.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "toolCallId": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "arguments": { "type": "object" }
+        },
+        "required": ["toolCallId", "name", "arguments"],
+        "additionalProperties": false
+      }
+    },
+    "finishReason": {
+      "type": "string",
+      "enum": ["STOP", "TOOL_CALLS", "MAX_TOKENS", "CONTENT_FILTER", "ERROR"]
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "cachedInputTokens": { "type": "integer", "minimum": 0 },
+        "reasoningTokens": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["inputTokens", "outputTokens"],
+      "additionalProperties": false
+    },
+    "providerModelId": {
+      "type": "string",
+      "description": "The concrete model actually served. Recorded because a logical modelRef may resolve differently over time, and an evaluation result is meaningless without knowing what actually answered."
+    },
+    "latencyMs": { "$ref": "../common/common.schema.json#/$defs/durationMs" },
+    "cost": {
+      "type": "object",
+      "description": "Computed by the gateway from recorded usage (ADR-0011 §5), never reported by the caller.",
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "estimated": { "type": "boolean" }
+      },
+      "required": ["amount", "currency", "estimated"],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "ADR-0010 §6. CONTENT_FILTER is recorded and never silently swallowed.",
+          "enum": [
+            "RATE_LIMITED",
+            "TRANSIENT",
+            "TIMEOUT",
+            "AUTH",
+            "INVALID_REQUEST",
+            "CONTEXT_TOO_LARGE",
+            "CONTENT_FILTER",
+            "INVALID_OUTPUT",
+            "PROVIDER_ERROR"
+          ]
+        },
+        "message": { "type": "string" },
+        "retryAfterMs": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["category", "message"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["modelInvocationId", "finishReason", "usage", "providerModelId", "latencyMs"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "finishReason": { "const": "ERROR" } }, "required": ["finishReason"] },
+      "then": { "required": ["error"] }
+    },
+    {
+      "if": { "properties": { "finishReason": { "const": "TOOL_CALLS" } }, "required": ["finishReason"] },
+      "then": { "required": ["toolCalls"] }
+    }
+  ]
+}

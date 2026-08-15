@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/context/context-bundle.schema.json",
+  "title": "ContextBundle",
+  "description": "An immutable, content-addressed set of retrieved material assembled for one node attempt (ADR-0013). bundleRef is sha256 of the canonical serialisation. The bundle records not only what was included but why, what was excluded and under whose identity each item was retrieved, so the platform can answer 'why did the agent see this?' from durable state.",
+  "type": "object",
+  "properties": {
+    "bundleRef": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "supersedes": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "The previous bundleRef when this is a refresh. Bundles are never edited in place."
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "limit": { "type": "integer", "minimum": 1 },
+        "used": { "type": "integer", "minimum": 0 },
+        "policyId": { "type": "string", "minLength": 1 }
+      },
+      "required": ["limit", "used", "policyId"],
+      "additionalProperties": false
+    },
+    "pins": {
+      "type": "object",
+      "description": "Exact revisions the bundle was built from. Pinning is what makes a run reproducible: re-running against a moved branch or an edited page is a different experiment.",
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "repositoryId": { "$ref": "../common/common.schema.json#/$defs/repositoryId" },
+              "ref": { "type": "string" },
+              "commitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+            },
+            "required": ["repositoryId", "ref", "commitSha"],
+            "additionalProperties": false
+          }
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": { "type": "string" },
+              "versionOrUpdatedAt": { "type": "string" }
+            },
+            "required": ["key", "versionOrUpdatedAt"],
+            "additionalProperties": false
+          }
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pageId": { "type": "string" },
+              "version": { "type": ["string", "integer"] }
+            },
+            "required": ["pageId", "version"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "excluded": {
+      "type": "array",
+      "description": "What was considered and left out. Recorded because a missing-context failure is otherwise indistinguishable from a reasoning failure.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceId": { "type": "string" },
+          "reason": {
+            "type": "string",
+            "enum": ["EVICTED_BUDGET", "POLICY_EXCLUDED", "ACCESS_DENIED", "STALE"]
+          },
+          "tokenCount": { "type": "integer", "minimum": 0 }
+        },
+        "required": ["sourceId", "reason", "tokenCount"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["bundleRef", "runId", "nodeId", "createdAt", "budget", "pins", "items", "excluded"],
+  "additionalProperties": false,
+  "$defs": {
+    "item": {
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string", "minLength": 1 },
+        "sourceSystem": {
+          "type": "string",
+          "enum": ["REPOSITORY", "JIRA", "CONFLUENCE", "GITHUB", "PLATFORM", "RUN_STATE"]
+        },
+        "sourceId": {
+          "type": "string",
+          "description": "Path, issue key, page id, PR number, or prior node id."
+        },
+        "revision": { "type": "string" },
+        "retrievedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+        "retrievedAs": {
+          "type": "string",
+          "description": "The acting identity used for retrieval (ADR-0013 §4). ADR-0012 §5 keeps this distinct from action identity: the GitHub App acts, but retrieval uses developer credentials. Retrieving with the App's broader reach would let the platform surface material the requesting developer cannot see, undoing the anti-amplification control."
+        },
+        "strategy": {
+          "type": "string",
+          "enum": ["DIRECT", "PATH_MATCH", "SEARCH", "LINK_TRAVERSAL", "GRAPH_STATE"]
+        },
+        "relevanceScore": {
+          "type": "number",
+          "description": "Comparable within a bundle only. Scores from different bundles or policies are not on a shared scale."
+        },
+        "tokenCount": { "type": "integer", "minimum": 0 },
+        "inclusionReason": { "type": "string", "minLength": 1 },
+        "trustClass": {
+          "type": "string",
+          "description": "PLATFORM content is platform-authored. UNTRUSTED is everything retrieved from a repository, issue, page or pull request, and is treated as data that may attempt to influence the model. It is never rendered where the protocol expects platform-controlled fields.",
+          "enum": ["PLATFORM", "UNTRUSTED"]
+        },
+        "contentRef": { "$ref": "../artifacts/artifact-ref.schema.json" }
+      },
+      "required": [
+        "itemId",
+        "sourceSystem",
+        "sourceId",
+        "revision",
+        "retrievedAt",
+        "retrievedAs",
+        "strategy",
+        "tokenCount",
+        "inclusionReason",
+        "trustClass",
+        "contentRef"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/condition.schema.json",
+  "title": "Condition",
+  "description": "The restricted condition language of ADR-0008 §4, used for edge conditions and loop exits. Permitted: comparison, boolean composition, presence tests, set membership. Forbidden: arbitrary scripting, I/O, side effects, and any reference to free-form model text. Every condition must be total and evaluable from durable state alone, which is what makes a run's branching decisions explainable after the fact without re-invoking a model.",
+  "$ref": "#/$defs/expression",
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "description": "A path into validated structured node output or into run variables. Nothing else is addressable.",
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["nodeOutput", "runVariable"]
+        },
+        "nodeId": {
+          "$ref": "../common/common.schema.json#/$defs/nodeId",
+          "description": "Required when source is nodeOutput."
+        },
+        "path": {
+          "type": "string",
+          "description": "Dotted path into the validated document, e.g. 'verification.passed'. Only fields declared in the node's output schema may be referenced.",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$"
+        }
+      },
+      "required": ["source", "path"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "source": { "const": "nodeOutput" } }, "required": ["source"] },
+          "then": { "required": ["nodeId"] }
+        }
+      ]
+    },
+    "literal": {
+      "type": ["string", "number", "boolean", "null"]
+    },
+    "expression": {
+      "oneOf": [
+        { "$ref": "#/$defs/comparison" },
+        { "$ref": "#/$defs/membership" },
+        { "$ref": "#/$defs/presence" },
+        { "$ref": "#/$defs/composition" },
+        { "$ref": "#/$defs/negation" },
+        { "$ref": "#/$defs/constant" }
+      ]
+    },
+    "constant": {
+      "type": "object",
+      "properties": { "const": { "type": "boolean" } },
+      "required": ["const"],
+      "additionalProperties": false
+    },
+    "comparison": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["eq", "ne", "lt", "lte", "gt", "gte"] },
+        "left": { "$ref": "#/$defs/reference" },
+        "right": {
+          "oneOf": [
+            { "$ref": "#/$defs/reference" },
+            { "type": "object", "properties": { "value": { "$ref": "#/$defs/literal" } }, "required": ["value"], "additionalProperties": false }
+          ]
+        }
+      },
+      "required": ["op", "left", "right"],
+      "additionalProperties": false
+    },
+    "membership": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["in", "notIn"] },
+        "left": { "$ref": "#/$defs/reference" },
+        "values": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/literal" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": ["op", "left", "values"],
+      "additionalProperties": false
+    },
+    "presence": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["exists", "notExists"] },
+        "left": { "$ref": "#/$defs/reference" }
+      },
+      "required": ["op", "left"],
+      "additionalProperties": false
+    },
+    "composition": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["and", "or"] },
+        "operands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expression" },
+          "minItems": 2
+        }
+      },
+      "required": ["op", "operands"],
+      "additionalProperties": false
+    },
+    "negation": {
+      "type": "object",
+      "properties": {
+        "op": { "const": "not" },
+        "operand": { "$ref": "#/$defs/expression" }
+      },
+      "required": ["op", "operand"],
+      "additionalProperties": false
+    }
+  }
+}

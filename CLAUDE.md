@@ -36,6 +36,11 @@ Also inspect relevant documents under:
 - `docs/decisions/`
 - `docs/integrations/`
 
+Contracts between components exist in machine-readable form under `schemas/`. When
+implementing anything that produces or consumes one of them, use the schema rather than
+re-deriving the shape from ADR prose — the schema is the same decision, and the two must not
+drift. Run `python3 .github/scripts/schemalint.py` after changing one.
+
 ---
 
 ## V1 Constraints

@@ -70,7 +70,18 @@ It verifies:
 - the ADR index and the filesystem agree on which ADRs exist and their status
 - documents do not reintroduce excluded technologies
 
-The same script runs in CI via [.github/workflows/docs.yml](.github/workflows/docs.yml).
+The contract schemas in [`schemas/`](schemas/README.md) have their own check:
+
+```bash
+python3 .github/scripts/schemalint.py
+```
+
+It verifies `$id`/path agreement, `$ref` resolution and closed object schemas, and validates
+the example documents — including `schemas/examples/invalid/`, where each document must be
+rejected *for the specific reason it declares*. That last part is what makes a deleted
+security constraint fail loudly rather than silently.
+
+Both run in CI via [.github/workflows/docs.yml](.github/workflows/docs.yml).
 
 These checks catch structure, not judgement. They will not tell you that a decision is
 wrong, only that the documentation is inconsistent with itself.

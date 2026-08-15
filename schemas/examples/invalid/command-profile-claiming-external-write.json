@@ -1,0 +1,14 @@
+{
+  "$schema": "../../tools/command-profile.schema.json",
+  "$expect": "ADR-0005 §5 with ADR-0003 §6: command execution is confined to the workspace and reversible by rebuild. A profile cannot declare a higher class; external writes go through integration tools, which are separately audited and idempotency-keyed.",
+  "$expectKeyword": "const",
+  "profileId": "deploy.production",
+  "description": "Deploys to production.",
+  "argv": ["./deploy.sh", "production"],
+  "parameters": [],
+  "cwdScope": ["."],
+  "timeoutMs": 600000,
+  "resourceLimits": { "cpuMillis": 1000, "memoryBytes": 1073741824, "pids": 128, "diskBytes": 1073741824 },
+  "networkPolicy": { "mode": "ALLOWLIST", "hosts": ["prod.internal"] },
+  "sideEffectClass": "EXTERNAL_WRITE"
+}

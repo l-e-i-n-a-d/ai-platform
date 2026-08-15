@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/execution/execution-result.schema.json",
+  "title": "ExecutionResult",
+  "description": "Returned by await() or poll() (ADR-0003 §4). A non-zero exit code is a result, not an error: a failing test is the normal case in a repair loop. The error taxonomy is reserved for the executor failing to run the command at all.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["COMPLETED", "TIMED_OUT", "CANCELLED", "RESOURCE_EXCEEDED", "EXECUTOR_ERROR"]
+    },
+    "exitCode": {
+      "type": "integer",
+      "description": "Present when status is COMPLETED. Non-zero is a normal outcome and does not by itself fail a node."
+    },
+    "stdoutRef": { "$ref": "../artifacts/artifact-ref.schema.json" },
+    "stderrRef": { "$ref": "../artifacts/artifact-ref.schema.json" },
+    "stdoutPreview": {
+      "type": "string",
+      "description": "Bounded inline preview for human display only. The full stream is always in stdoutRef; ADR-0003 §4 forbids returning output inline beyond a preview.",
+      "maxLength": 4096
+    },
+    "stderrPreview": { "type": "string", "maxLength": 4096 },
+    "durationMs": { "$ref": "../common/common.schema.json#/$defs/durationMs" },
+    "resourceUsage": { "$ref": "../common/common.schema.json#/$defs/resourceUsage" },
+    "networkDenials": {
+      "type": "array",
+      "description": "Connections refused by the network policy. ADR-0003: a security and supply-chain signal worth alerting on, not merely debug output.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": { "type": "string" },
+          "port": { "type": "integer", "minimum": 0, "maximum": 65535 },
+          "count": { "type": "integer", "minimum": 1 },
+          "firstSeenAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+        },
+        "required": ["host", "count"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["status", "stdoutRef", "stderrRef", "durationMs", "networkDenials"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "COMPLETED" } }, "required": ["status"] },
+      "then": { "required": ["exitCode"] }
+    }
+  ]
+}

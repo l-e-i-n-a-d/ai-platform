@@ -12,6 +12,10 @@
 # is an architectural act, not an editorial one.
 /docs/decisions/            @l-e-i-n-a-d
 
+# The executable form of those decisions, shared by the Java control plane and the
+# Python agent runtime. A change here is a change to a cross-language contract.
+/schemas/                   @l-e-i-n-a-d
+
 # Component contracts. Drift here is what the documentation checks exist to catch.
 /docs/architecture/         @l-e-i-n-a-d
 /docs/integrations/         @l-e-i-n-a-d

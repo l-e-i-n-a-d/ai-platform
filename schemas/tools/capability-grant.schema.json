@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/tools/capability-grant.schema.json",
+  "title": "CapabilityGrant",
+  "description": "Minted by the control plane per node attempt (ADR-0005 §4). Derived from the graph node definition intersected with the repository registry's capability ceiling, never from anything the model produced. Monotonically non-increasing: no operation grows a grant mid-attempt, and a retry receives a fresh grant so a failed attempt leaves no residual authority. The agent runtime never handles a grant, only the attempt token that resolves to it.",
+  "type": "object",
+  "properties": {
+    "grantId": { "type": "string", "minLength": 1 },
+    "subject": {
+      "type": "object",
+      "properties": {
+        "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+        "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" }
+      },
+      "required": ["runId", "nodeId", "attempt"],
+      "additionalProperties": false
+    },
+    "allowedTools": {
+      "type": "array",
+      "description": "Explicit tool ids and versions. ADR-0005 §4: never a wildcard. An empty list is valid and means no tool may be invoked.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "../common/common.schema.json#/$defs/toolId" },
+          "version": { "$ref": "../common/common.schema.json#/$defs/semver" }
+        },
+        "required": ["id", "version"],
+        "additionalProperties": false
+      },
+      "uniqueItems": true
+    },
+    "maxSideEffect": { "$ref": "../common/common.schema.json#/$defs/sideEffectClass" },
+    "repositoryScope": {
+      "type": "array",
+      "items": { "$ref": "../common/common.schema.json#/$defs/repositoryId" },
+      "uniqueItems": true
+    },
+    "pathScope": { "$ref": "../common/common.schema.json#/$defs/pathScope" },
+    "externalScope": {
+      "type": "object",
+      "properties": {
+        "jiraProjectKeys": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,9}$" },
+          "uniqueItems": true
+        },
+        "githubRepositories": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+          "uniqueItems": true
+        },
+        "confluenceSpaceKeys": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "commandProfiles": {
+      "type": "array",
+      "description": "Named profiles this attempt may run (ADR-0005 §5). Adding a profile is a reviewed human change to repository configuration; nothing here lets an agent introduce one.",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{0,63}$" },
+      "uniqueItems": true
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "maxInvocations": { "type": "integer", "minimum": 0 },
+        "maxWallClockMs": { "type": "integer", "minimum": 1 },
+        "maxCostUnits": { "type": "number", "minimum": 0 },
+        "maxDenials": {
+          "type": "integer",
+          "description": "Denial circuit breaker (ADR-0005 §6). Exceeding it fails the node with TOOL_DENIED, which surfaces a wrong grant instead of letting a model spend its whole budget rediscovering that it may not do something.",
+          "minimum": 1
+        }
+      },
+      "required": ["maxInvocations", "maxWallClockMs", "maxDenials"],
+      "additionalProperties": false
+    },
+    "notAfter": {
+      "$ref": "../common/common.schema.json#/$defs/timestamp",
+      "description": "Attempt deadline. The grant is invalid after this instant even if budget remains."
+    }
+  },
+  "required": [
+    "grantId",
+    "subject",
+    "allowedTools",
+    "maxSideEffect",
+    "repositoryScope",
+    "pathScope",
+    "budget",
+    "notAfter"
+  ],
+  "additionalProperties": false
+}

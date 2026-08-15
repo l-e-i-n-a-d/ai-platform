@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/tools/command-profile.schema.json",
+  "title": "CommandProfile",
+  "description": "A named, argv-fixed command declared by a repository (ADR-0005 §5). workspace.run_profile(profileId, parameters) is the only route to command execution: there is no tool that accepts a shell string or a free-form argv array from a model. Parameters are substituted as discrete argv elements, never concatenated into a shell, and no shell is involved at any layer.",
+  "type": "object",
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]{0,63}$",
+      "examples": ["maven.test", "npm.build", "pytest.unit"]
+    },
+    "description": { "type": "string", "minLength": 1 },
+    "argv": {
+      "type": "array",
+      "description": "Fixed argument vector. Elements of the form ${paramName} are replaced by the validated value of that parameter as a single discrete argv element.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "parameters": {
+      "type": "array",
+      "description": "Declared, typed and schema-validated. An undeclared parameter is rejected.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$" },
+          "type": { "type": "string", "enum": ["string", "integer", "boolean", "enum"] },
+          "required": { "type": "boolean" },
+          "pattern": {
+            "type": "string",
+            "description": "For string parameters. Should be as narrow as the use allows; this is the last line of defence on values that ultimately reach a process."
+          },
+          "allowedValues": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "default": {}
+        },
+        "required": ["name", "type", "required"],
+        "additionalProperties": false
+      }
+    },
+    "cwdScope": {
+      "$ref": "../common/common.schema.json#/$defs/globList",
+      "description": "Workspace-relative paths where this profile may run."
+    },
+    "timeoutMs": { "type": "integer", "minimum": 1 },
+    "resourceLimits": { "$ref": "../common/common.schema.json#/$defs/resourceLimits" },
+    "networkPolicy": { "$ref": "../common/common.schema.json#/$defs/networkPolicy" },
+    "sideEffectClass": {
+      "const": "WORKSPACE_WRITE",
+      "description": "Command execution is confined to the granted workspace and is reversible by workspace rebuild (ADR-0003 §6). A profile cannot declare a higher class; external writes go through integration tools, which are separately audited and idempotency-keyed."
+    }
+  },
+  "required": [
+    "profileId",
+    "description",
+    "argv",
+    "parameters",
+    "cwdScope",
+    "timeoutMs",
+    "resourceLimits",
+    "networkPolicy",
+    "sideEffectClass"
+  ],
+  "additionalProperties": false
+}

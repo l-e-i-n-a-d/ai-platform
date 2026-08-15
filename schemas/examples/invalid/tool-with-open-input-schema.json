@@ -1,0 +1,19 @@
+{
+  "$schema": "../../tools/tool-descriptor.schema.json",
+  "$expect": "ADR-0005 §2: inputSchema must be closed, so a model cannot smuggle undeclared fields past validation into an integration client.",
+  "$expectKeyword": "required",
+  "id": "jira.issue.update",
+  "version": "1.0.0",
+  "title": "Update an issue",
+  "description": "Updates fields on a Jira issue.",
+  "inputSchema": {
+    "type": "object",
+    "properties": { "summary": { "type": "string" } },
+    "required": ["summary"]
+  },
+  "outputSchema": { "type": "object" },
+  "sideEffectClass": "EXTERNAL_WRITE",
+  "idempotency": "KEYED",
+  "approvalPolicy": { "mode": "NEVER" },
+  "timeoutMs": 30000
+}

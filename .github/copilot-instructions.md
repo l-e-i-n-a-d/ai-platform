@@ -1011,6 +1011,12 @@ ADR location:
 docs/decisions/
 ```
 
+The contracts those decisions define exist in machine-readable form under `schemas/`, with
+valid and deliberately-invalid example documents. When implementing a component that produces
+or consumes a contract, use the schema as the source of truth for its shape; the ADR remains
+the source of truth for the reasoning. If the two disagree, that is a defect in one of them —
+raise it rather than choosing one.
+
 Before making a significant architectural change, check existing ADRs.
 
 ---

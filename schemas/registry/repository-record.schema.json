@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/registry/repository-record.schema.json",
+  "title": "RepositoryRecord",
+  "description": "A repository the platform is allowed to work in (ADR-0014). The record is the capability ceiling for that repository. ADR-0014 §5 fixes the precedence: platform policy, then trust-level ceiling, then this record, then the graph node definition — each layer may only narrow. Files resident in the target repository affect context only and have zero capability effect, which is what stops a repository the platform is editing from rewriting the configuration that governs editing it.",
+  "type": "object",
+  "properties": {
+    "repositoryId": { "$ref": "../common/common.schema.json#/$defs/repositoryId" },
+    "displayName": { "type": "string", "minLength": 1 },
+    "remotes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "defaultBranch": { "type": "string", "minLength": 1 },
+    "trustLevel": { "$ref": "../common/common.schema.json#/$defs/trustLevel" },
+    "toolImage": {
+      "type": "string",
+      "description": "Digest-pinned workspace image (ADR-0006 §5).",
+      "pattern": "^[^\\s]+@sha256:[0-9a-f]{64}$"
+    },
+    "commandProfiles": {
+      "type": "array",
+      "items": { "$ref": "../tools/command-profile.schema.json" }
+    },
+    "capabilityCeiling": {
+      "type": "object",
+      "properties": {
+        "maxSideEffect": { "$ref": "../common/common.schema.json#/$defs/sideEffectClass" },
+        "allowedTools": {
+          "type": "array",
+          "items": { "$ref": "../common/common.schema.json#/$defs/toolId" },
+          "uniqueItems": true
+        },
+        "networkAllowlist": {
+          "type": "array",
+          "description": "Package registry hosts reachable from this repository's workspaces. Everything else is denied.",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "pathScope": { "$ref": "../common/common.schema.json#/$defs/pathScope" },
+        "approvalOverrides": {
+          "type": "array",
+          "description": "Side-effect classes that always require approval in this repository, regardless of the tool's own policy. Narrowing only: this can add an approval requirement, never remove one.",
+          "items": { "$ref": "../common/common.schema.json#/$defs/sideEffectClass" },
+          "uniqueItems": true
+        },
+        "budgetCeiling": {
+          "type": "object",
+          "properties": {
+            "maxCostUnitsPerRun": { "type": "number", "minimum": 0 },
+            "maxInvocationsPerAttempt": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["maxSideEffect", "allowedTools", "networkAllowlist", "pathScope"],
+      "additionalProperties": false
+    },
+    "contextPolicy": {
+      "type": "object",
+      "properties": {
+        "includePaths": { "$ref": "../common/common.schema.json#/$defs/globList" },
+        "excludePaths": {
+          "$ref": "../common/common.schema.json#/$defs/globList",
+          "description": "Never index secrets or vendored trees. An exclusion here is a retrieval control, not a security boundary; secrets should not be in the repository in the first place."
+        },
+        "instructionFiles": {
+          "$ref": "../common/common.schema.json#/$defs/globList",
+          "description": "Repository files surfaced to agents as context. Context only — these carry no capability effect."
+        },
+        "maxContextBudget": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["includePaths", "excludePaths", "maxContextBudget"],
+      "additionalProperties": false
+    },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "requiredChecks": {
+          "type": "array",
+          "description": "Command profiles that must pass before any EXTERNAL_WRITE for this repository. This is how 'the tests must pass before opening a pull request' becomes a platform property rather than an instruction to a model.",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "required": ["requiredChecks"],
+      "additionalProperties": false
+    },
+    "owners": {
+      "type": "array",
+      "description": "Approval routing.",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+    "registeredBy": { "type": "string" },
+    "registeredAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "configHash": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "Hash of the canonical record. Recorded on every grant and audit entry so that 'what were the rules at the time?' is answerable after the record changes."
+    }
+  },
+  "required": [
+    "repositoryId",
+    "displayName",
+    "remotes",
+    "defaultBranch",
+    "trustLevel",
+    "toolImage",
+    "commandProfiles",
+    "capabilityCeiling",
+    "contextPolicy",
+    "verification",
+    "owners",
+    "status",
+    "registeredBy",
+    "registeredAt",
+    "configHash"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/node-execution.schema.json",
+  "title": "NodeExecution",
+  "description": "The durable record of one node attempt (ADR-0008 §7). Records are never overwritten by a retry: each attempt keeps its own record, because evaluation depends on being able to see how failures evolved.",
+  "type": "object",
+  "properties": {
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" },
+    "version": { "type": "integer", "minimum": 0 },
+    "nodeType": {
+      "type": "string",
+      "enum": ["context", "agent", "tool", "approval", "decision", "loop", "terminal"]
+    },
+    "status": {
+      "type": "string",
+      "description": "ADR-0008 §7. INDETERMINATE is entered when a write-ahead intent record exists with no matching outcome: a side effect may or may not have occurred. Most workflow engines omit this state and then discover they need it after posting two pull requests for the same issue.",
+      "enum": [
+        "PENDING",
+        "SCHEDULED",
+        "RUNNING",
+        "SUCCEEDED",
+        "AWAITING_APPROVAL",
+        "AWAITING_RETRY",
+        "FAILED",
+        "SKIPPED",
+        "CANCELLED",
+        "INDETERMINATE"
+      ]
+    },
+    "capabilityGrantId": {
+      "type": "string",
+      "description": "The grant minted for this attempt. A retry gets a fresh grant, so a failed attempt leaves no residual authority behind."
+    },
+    "contextBundleRef": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+    "claimedOutput": {
+      "type": "object",
+      "description": "What the runtime reported. Not authoritative: ADR-0004 §9 requires the control plane to validate it against the node's declared output schema before any transition is evaluated."
+    },
+    "validatedOutput": {
+      "type": "object",
+      "description": "claimedOutput after successful schema validation. Only this may be referenced by edge conditions."
+    },
+    "outputValid": { "type": "boolean" },
+    "iterations": { "type": "integer", "minimum": 0 },
+    "stopReason": { "type": "string" },
+    "failure": { "$ref": "run.schema.json#/$defs/failure" },
+    "nextAttemptAt": {
+      "$ref": "../common/common.schema.json#/$defs/timestamp",
+      "description": "Set when status is AWAITING_RETRY."
+    },
+    "lastFailureCategory": { "$ref": "../common/common.schema.json#/$defs/failureCategory" },
+    "indeterminateReason": {
+      "type": "object",
+      "description": "Populated only when status is INDETERMINATE. ADR-0008 Security Impact: this must be visible to an operator. A silently swallowed indeterminate side effect is worse than a loud failure.",
+      "properties": {
+        "toolId": { "$ref": "../common/common.schema.json#/$defs/toolId" },
+        "idempotencyKey": { "type": "string" },
+        "intentRecordedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+        "reconciliationHint": { "type": "string" }
+      },
+      "required": ["toolId", "idempotencyKey", "intentRecordedAt"],
+      "additionalProperties": false
+    },
+    "deadline": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "startedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "endedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+  },
+  "required": ["runId", "nodeId", "attempt", "version", "nodeType", "status"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "INDETERMINATE" } }, "required": ["status"] },
+      "then": { "required": ["indeterminateReason"] }
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "../graph/graph-definition.schema.json",
+  "schemaVersion": "1",
+  "graphId": "jira-issue-to-pull-request",
+  "title": "Jira issue to pull request",
+  "description": "The reference workflow: read an issue, plan, implement, verify, and open a pull request behind a human approval. Every construct used here is exercised by the contract tests.",
+  "entryNodeId": "gather_context",
+  "variables": {
+    "issueKey": { "type": "string" }
+  },
+  "defaultRetryPolicy": {
+    "maxAttempts": 3,
+    "backoff": { "strategy": "EXPONENTIAL", "initialDelayMs": 1000, "maxDelayMs": 30000, "jitter": true },
+    "retryableCategories": ["TRANSIENT", "MODEL_ERROR", "INVALID_OUTPUT"]
+  },
+  "nodes": [
+    {
+      "id": "gather_context",
+      "type": "context",
+      "title": "Assemble the context bundle",
+      "contextPolicyId": "default-implementation",
+      "tokenBudget": 60000
+    },
+    {
+      "id": "implement",
+      "type": "agent",
+      "title": "Implement the change",
+      "agentId": "software-engineer",
+      "objective": "Implement the change described by the issue, in the smallest coherent form.",
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "summary": { "type": "string" },
+          "filesChanged": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["summary", "filesChanged"],
+        "additionalProperties": false
+      },
+      "requestedCapabilities": {
+        "allowedTools": ["workspace.read_file", "workspace.apply_patch", "workspace.run_profile"],
+        "maxSideEffect": "WORKSPACE_WRITE",
+        "commandProfiles": ["maven.test"]
+      },
+      "budgets": { "maxIterations": 25, "maxTokens": 400000, "maxCostUnits": 5.0 },
+      "modelPolicy": { "selector": "implementation-default" }
+    },
+    {
+      "id": "verify",
+      "type": "tool",
+      "title": "Run the repository's required checks",
+      "toolId": "workspace.run_profile",
+      "toolVersion": "1.0.0",
+      "input": { "profileId": "maven.test" }
+    },
+    {
+      "id": "repair_loop",
+      "type": "loop",
+      "title": "Repair until the tests pass",
+      "bodyNodeId": "implement",
+      "maxIterations": 5,
+      "exitCondition": {
+        "op": "eq",
+        "left": { "source": "nodeOutput", "nodeId": "verify", "path": "passed" },
+        "right": { "value": true }
+      }
+    },
+    {
+      "id": "approve_pr",
+      "type": "approval",
+      "title": "Approve opening the pull request",
+      "requiredKind": "LOCAL_OPERATOR_CONSENT",
+      "subjectRef": "patch-series",
+      "expiresAfterMs": 604800000
+    },
+    {
+      "id": "open_pr",
+      "type": "tool",
+      "title": "Open the pull request",
+      "toolId": "github.pull_request.create",
+      "toolVersion": "1.0.0",
+      "input": { "draft": true }
+    },
+    { "id": "done", "type": "terminal", "outcome": "SUCCEEDED" },
+    { "id": "gave_up", "type": "terminal", "outcome": "FAILED" }
+  ],
+  "edges": [
+    { "from": "gather_context", "to": "repair_loop" },
+    { "from": "repair_loop", "to": "approve_pr", "condition": {
+        "op": "eq",
+        "left": { "source": "nodeOutput", "nodeId": "verify", "path": "passed" },
+        "right": { "value": true }
+      }
+    },
+    { "from": "repair_loop", "to": "gave_up", "condition": {
+        "op": "not",
+        "operand": {
+          "op": "eq",
+          "left": { "source": "nodeOutput", "nodeId": "verify", "path": "passed" },
+          "right": { "value": true }
+        }
+      }
+    },
+    { "from": "approve_pr", "to": "open_pr" },
+    { "from": "open_pr", "to": "done" }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "../../tools/tool-descriptor.schema.json",
+  "$expect": "ADR-0005 §3: IRREVERSIBLE tools always require human approval. Class is declared on the tool and is not negotiable per call.",
+  "$expectKeyword": "const",
+  "id": "github.pull_request.merge",
+  "version": "1.0.0",
+  "title": "Merge a pull request",
+  "description": "Merges a pull request.",
+  "inputSchema": {
+    "type": "object",
+    "properties": { "number": { "type": "integer" } },
+    "required": ["number"],
+    "additionalProperties": false
+  },
+  "outputSchema": { "type": "object" },
+  "sideEffectClass": "IRREVERSIBLE",
+  "idempotency": "NATURAL",
+  "approvalPolicy": { "mode": "NEVER" },
+  "timeoutMs": 30000
+}

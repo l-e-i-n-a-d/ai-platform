@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/agent/agent-execution-result.schema.json",
+  "title": "AgentExecutionResult",
+  "description": "Returned by the agent runtime for one node attempt (ADR-0004 §11). ADR-0004 §9: the control plane never trusts this self-report. claimedOutput is validated against the node's declared output schema before any transition is evaluated; usage and cost are taken from the model gateway's own records rather than from the runtime's summary; tool effects are known from the tool layer's records rather than from the runtime's narrative. That is what makes this a trust boundary rather than a module boundary.",
+  "type": "object",
+  "properties": {
+    "protocolVersion": { "const": "1" },
+    "status": {
+      "type": "string",
+      "description": "Maps onto the failure categories of ADR-0008. The runtime does not invent categories and does not decide retryability.",
+      "enum": [
+        "COMPLETED",
+        "BUDGET_EXHAUSTED",
+        "MODEL_ERROR",
+        "TOOL_ERROR",
+        "RUNTIME_ERROR",
+        "CANCELLED"
+      ]
+    },
+    "claimedOutput": {
+      "type": "object",
+      "description": "Claimed, not validated. Present when status is COMPLETED."
+    },
+    "iterations": { "type": "integer", "minimum": 0 },
+    "stopReason": { "type": "string" },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "category": { "$ref": "../common/common.schema.json#/$defs/failureCategory" },
+        "message": { "type": "string" },
+        "detailsRef": { "$ref": "../artifacts/artifact-ref.schema.json" }
+      },
+      "required": ["category", "message"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["protocolVersion", "status", "iterations"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "COMPLETED" } }, "required": ["status"] },
+      "then": { "required": ["claimedOutput"] },
+      "else": { "required": ["failure"] }
+    }
+  ]
+}

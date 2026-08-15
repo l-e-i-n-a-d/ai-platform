@@ -1,0 +1,32 @@
+{
+  "$schema": "../../approval/approval-record.schema.json",
+  "$expect": "ADR-0009: EXTERNAL_ATTESTATION borrows identity from a system that has it. Without the external reference there is nothing to corroborate, so it is really LOCAL_OPERATOR_CONSENT wearing a stronger label.",
+  "$expectKeyword": "required",
+  "approvalId": "appr_1",
+  "runId": "run_01HQ8X2K4M9Z",
+  "nodeId": "approve_pr",
+  "kind": "EXTERNAL_ATTESTATION",
+  "requiredKind": "EXTERNAL_ATTESTATION",
+  "subjectHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "subjectRef": {
+    "uri": "artifact://ab/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sizeBytes": 1024,
+    "contentType": "text/x-patch",
+    "classification": {
+      "artifactType": "PATCH",
+      "sensitivity": "INTERNAL",
+      "provenance": "PLATFORM_GENERATED",
+      "redacted": false,
+      "retentionTier": "AUDIT"
+    },
+    "createdAt": "2026-08-15T12:00:00Z"
+  },
+  "renderingHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "status": "APPROVED",
+  "decidedBy": "someone",
+  "decidedAt": "2026-08-15T12:05:00Z",
+  "expiresAt": "2026-08-22T12:00:00Z",
+  "interactive": true,
+  "createdAt": "2026-08-15T12:00:00Z"
+}

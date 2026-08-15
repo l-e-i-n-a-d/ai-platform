@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/checkpoint.schema.json",
+  "title": "Checkpoint",
+  "description": "Written at every node boundary, in the same transactional batch as the node's terminal status (ADR-0008 §10). Intra-agent iteration checkpoints are explicitly out of scope: an agent attempt is the unit of retry, and a partially completed agent loop is re-run, not resumed.",
+  "type": "object",
+  "properties": {
+    "checkpointId": { "type": "string", "minLength": 1 },
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "afterNodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "graphVariablesRef": { "$ref": "../artifacts/artifact-ref.schema.json" },
+    "workspaceStateRef": { "$ref": "#/$defs/workspaceState" },
+    "contextBundleRefs": {
+      "type": "array",
+      "items": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+      "uniqueItems": true
+    },
+    "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+  },
+  "required": ["checkpointId", "runId", "afterNodeId", "sequence", "workspaceStateRef", "createdAt"],
+  "additionalProperties": false,
+  "$defs": {
+    "workspaceState": {
+      "type": "object",
+      "description": "The load-bearing invariant of ADR-0003 §6: workspace state is at all times a function of (repoRef, baseSHA, ordered patch series), all of which live in durable state. This is simultaneously what makes resume work and what makes a remote executor a drop-in. Without it, workspaces become precious mutable state on one laptop and both properties are lost.",
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "repoRef": { "$ref": "../common/common.schema.json#/$defs/repoRef" },
+              "baseSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+              "patchSeries": {
+                "type": "array",
+                "description": "Ordered. Applying these to baseSha reproduces the working tree exactly.",
+                "items": { "$ref": "../artifacts/artifact-ref.schema.json" }
+              }
+            },
+            "required": ["repoRef", "baseSha", "patchSeries"],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["repositories"],
+      "additionalProperties": false
+    }
+  }
+}

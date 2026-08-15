@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/artifacts/artifact-ref.schema.json",
+  "title": "ArtifactRef",
+  "description": "A reference to content in the artifact store (ADR-0017 §2). ADR-0003 §3 requires that artifacts cross the execution boundary as references and never as local paths or open handles, so this type appears in most other contracts.",
+  "type": "object",
+  "properties": {
+    "uri": {
+      "type": "string",
+      "description": "Artifact-store URI. Opaque to callers; only the artifact store resolves it.",
+      "minLength": 1
+    },
+    "sha256": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+    "sizeBytes": { "type": "integer", "minimum": 0 },
+    "contentType": { "type": "string", "minLength": 1 },
+    "encoding": {
+      "type": "string",
+      "enum": ["identity", "gzip", "zstd"]
+    },
+    "classification": { "$ref": "#/$defs/classification" },
+    "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "expiresAt": {
+      "$ref": "../common/common.schema.json#/$defs/timestamp",
+      "description": "Advisory. ADR-0017 §4: RUN_LIFECYCLE artifacts are retained until the run reaches a terminal state even if this timestamp has passed, because deleting an artifact a resumable run depends on turns it into an unrecoverable one."
+    }
+  },
+  "required": ["uri", "sha256", "sizeBytes", "contentType", "classification", "createdAt"],
+  "additionalProperties": false,
+  "$defs": {
+    "classification": {
+      "type": "object",
+      "description": "ADR-0017 §1. Every artifact is classified at write time; classification is not inferred later.",
+      "properties": {
+        "artifactType": {
+          "type": "string",
+          "enum": [
+            "TRANSCRIPT",
+            "PROMPT",
+            "COMPLETION",
+            "CONTEXT_BUNDLE",
+            "PATCH",
+            "BUILD_LOG",
+            "CI_LOG",
+            "TOOL_OUTPUT",
+            "EVALUATION",
+            "REPORT",
+            "AUDIT_EXPORT"
+          ]
+        },
+        "sensitivity": {
+          "type": "string",
+          "enum": ["PUBLIC", "INTERNAL", "SENSITIVE"]
+        },
+        "provenance": {
+          "type": "string",
+          "enum": ["PLATFORM_GENERATED", "RETRIEVED", "EXECUTED_OUTPUT", "MODEL_OUTPUT"]
+        },
+        "redacted": {
+          "type": "boolean",
+          "description": "True when the redaction pass modified the content before it was stored."
+        },
+        "retentionTier": {
+          "type": "string",
+          "enum": ["EPHEMERAL", "RUN_LIFECYCLE", "REPRODUCIBILITY", "AUDIT"]
+        }
+      },
+      "required": ["artifactType", "sensitivity", "provenance", "redacted", "retentionTier"],
+      "additionalProperties": false
+    }
+  }
+}

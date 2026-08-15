@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/common/common.schema.json",
+  "title": "Common platform primitives",
+  "description": "Shared definitions referenced by the other contracts. Nothing here is a message in its own right.",
+  "$defs": {
+    "runId": {
+      "type": "string",
+      "description": "Opaque identifier of a graph run.",
+      "pattern": "^run_[0-9a-zA-Z]{8,64}$"
+    },
+    "nodeId": {
+      "type": "string",
+      "description": "Identifier of a node within a graph definition. Unique within the definition.",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "description": "1-based attempt counter for a node execution. A retry increments it (ADR-0008 §11).",
+      "minimum": 1
+    },
+    "workspaceId": {
+      "type": "string",
+      "description": "Opaque workspace token. ADR-0003 §3: anything that parses this value is a defect. It is deliberately not given a structured pattern.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "executionHandle": {
+      "type": "string",
+      "description": "Opaque handle returned by submit(). Not parseable by callers.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "sha256": {
+      "type": "string",
+      "description": "Lowercase hex SHA-256 digest.",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "toolId": {
+      "type": "string",
+      "description": "Stable namespaced tool identifier, e.g. github.pull_request.create (ADR-0005 §2).",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "repositoryId": {
+      "type": "string",
+      "description": "Platform-assigned repository identifier. ADR-0014 §1: never derived from the remote URL.",
+      "pattern": "^repo_[0-9a-zA-Z]{4,64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp in UTC."
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "traceparent": {
+      "type": "string",
+      "description": "W3C Trace Context traceparent header value (ADR-0015).",
+      "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$"
+    },
+    "sideEffectClass": {
+      "type": "string",
+      "description": "ADR-0005 §3. Ordered from least to most consequential; a grant may narrow, never widen.",
+      "enum": ["READ", "WORKSPACE_WRITE", "EXTERNAL_WRITE", "IRREVERSIBLE"]
+    },
+    "trustLevel": {
+      "type": "string",
+      "description": "ADR-0014 §4.",
+      "enum": ["INTERNAL", "RESTRICTED", "EXTERNAL"]
+    },
+    "failureCategory": {
+      "type": "string",
+      "description": "ADR-0008 §11, extended by ADR-0009. Retry is driven by category, never by message text.",
+      "enum": [
+        "TRANSIENT",
+        "MODEL_ERROR",
+        "BUDGET_EXCEEDED",
+        "INVALID_OUTPUT",
+        "TOOL_DENIED",
+        "VERIFICATION_FAILED",
+        "EXECUTION_ERROR",
+        "INTEGRATION_ERROR",
+        "INDETERMINATE",
+        "CANCELLED",
+        "APPROVAL_REJECTED",
+        "APPROVAL_EXPIRED"
+      ]
+    },
+    "correlation": {
+      "type": "object",
+      "description": "Telemetry correlation block. ADR-0003 §4: carried, never interpreted. ADR-0015 §7: these values are forbidden as metric labels.",
+      "properties": {
+        "runId": { "$ref": "#/$defs/runId" },
+        "nodeId": { "$ref": "#/$defs/nodeId" },
+        "attempt": { "$ref": "#/$defs/attempt" },
+        "agentId": { "type": "string" },
+        "traceparent": { "$ref": "#/$defs/traceparent" }
+      },
+      "required": ["runId", "nodeId", "attempt"],
+      "additionalProperties": false
+    },
+    "globList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "pathScope": {
+      "type": "object",
+      "description": "Allow/deny globs evaluated against workspace-relative paths. Deny wins.",
+      "properties": {
+        "allow": { "$ref": "#/$defs/globList" },
+        "deny": { "$ref": "#/$defs/globList" }
+      },
+      "additionalProperties": false
+    },
+    "networkPolicy": {
+      "type": "object",
+      "description": "ADR-0003 §3: mandatory on every execution request, so connectivity is a decision rather than a default.",
+      "oneOf": [
+        {
+          "properties": {
+            "mode": { "const": "NONE" }
+          },
+          "required": ["mode"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "mode": { "const": "ALLOWLIST" },
+            "hosts": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": ["mode", "hosts"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "resourceLimits": {
+      "type": "object",
+      "properties": {
+        "cpuMillis": { "type": "integer", "minimum": 1 },
+        "memoryBytes": { "type": "integer", "minimum": 1 },
+        "pids": { "type": "integer", "minimum": 1 },
+        "diskBytes": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["cpuMillis", "memoryBytes", "pids", "diskBytes"],
+      "additionalProperties": false
+    },
+    "resourceUsage": {
+      "type": "object",
+      "properties": {
+        "cpuMillis": { "type": "integer", "minimum": 0 },
+        "maxMemoryBytes": { "type": "integer", "minimum": 0 },
+        "diskBytesWritten": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "repoRef": {
+      "type": "object",
+      "description": "Identifies what to materialise into a workspace. With baseSha and the patch series this reconstructs a workspace (ADR-0003 §6).",
+      "properties": {
+        "repositoryId": { "$ref": "#/$defs/repositoryId" },
+        "remote": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 },
+        "commitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      },
+      "required": ["repositoryId", "remote", "ref"],
+      "additionalProperties": false
+    },
+    "jsonSchema": {
+      "description": "An embedded JSON Schema document. Not constrained further here; validated by the schema library at load time.",
+      "type": "object"
+    }
+  }
+}

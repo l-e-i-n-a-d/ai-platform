@@ -1,0 +1,28 @@
+{
+  "$schema": "../tools/capability-grant.schema.json",
+  "grantId": "grant_01HQ8X2K4M",
+  "subject": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "implement", "attempt": 1 },
+  "allowedTools": [
+    { "id": "workspace.read_file", "version": "1.0.0" },
+    { "id": "workspace.apply_patch", "version": "1.0.0" },
+    { "id": "workspace.run_profile", "version": "1.0.0" }
+  ],
+  "maxSideEffect": "WORKSPACE_WRITE",
+  "repositoryScope": ["repo_orderservice"],
+  "pathScope": {
+    "allow": ["src/**", "pom.xml"],
+    "deny": ["**/*.pem", "**/secrets/**", ".github/**"]
+  },
+  "externalScope": {
+    "jiraProjectKeys": ["ORD"],
+    "githubRepositories": ["acme/order-service"]
+  },
+  "commandProfiles": ["maven.test"],
+  "budget": {
+    "maxInvocations": 200,
+    "maxWallClockMs": 1800000,
+    "maxCostUnits": 5.0,
+    "maxDenials": 10
+  },
+  "notAfter": "2026-08-15T12:30:00Z"
+}

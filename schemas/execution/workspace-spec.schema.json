@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/execution/workspace-spec.schema.json",
+  "title": "WorkspaceSpec",
+  "description": "Passed to createWorkspace() (ADR-0003 §1). One workspace per run, not per node (ADR-0003 §7), held under an exclusive lease so two runs never share a checkout.",
+  "type": "object",
+  "properties": {
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "repositories": {
+      "type": "array",
+      "description": "Repositories to be materialised. Multi-repository runs are supported, so this is a list rather than a single ref.",
+      "items": { "$ref": "../common/common.schema.json#/$defs/repoRef" },
+      "minItems": 1
+    },
+    "toolImage": {
+      "type": "string",
+      "description": "Digest-pinned container image providing the workspace toolchain (ADR-0006 §5). A tag is not acceptable: the workspace must be reproducible.",
+      "pattern": "^[^\\s]+@sha256:[0-9a-f]{64}$"
+    },
+    "resourceLimits": { "$ref": "../common/common.schema.json#/$defs/resourceLimits" },
+    "leaseTtlMs": {
+      "type": "integer",
+      "description": "Exclusive lease duration. Expiry makes the workspace collectable; because workspace state is reconstructible (ADR-0003 §6), losing one is recoverable rather than fatal.",
+      "minimum": 1000
+    }
+  },
+  "required": ["runId", "repositories", "toolImage", "resourceLimits", "leaseTtlMs"],
+  "additionalProperties": false
+}

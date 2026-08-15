@@ -1,0 +1,39 @@
+{
+  "$schema": "../tools/tool-descriptor.schema.json",
+  "id": "github.pull_request.create",
+  "version": "1.0.0",
+  "title": "Create a pull request",
+  "description": "Opens a pull request from the run's branch against the repository's default branch.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string", "maxLength": 256 },
+      "body": { "type": "string", "maxLength": 65536 },
+      "draft": { "type": "boolean" }
+    },
+    "required": ["title", "body"],
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "number": { "type": "integer" },
+      "url": { "type": "string" }
+    },
+    "required": ["number", "url"],
+    "additionalProperties": false
+  },
+  "sideEffectClass": "EXTERNAL_WRITE",
+  "scopeRequirements": { "repository": true, "externalProject": true },
+  "idempotency": "NATURAL",
+  "approvalPolicy": {
+    "mode": "CONDITIONAL",
+    "predicate": {
+      "op": "eq",
+      "left": { "source": "runVariable", "path": "targetsProtectedBranch" },
+      "right": { "value": true }
+    }
+  },
+  "timeoutMs": 30000,
+  "costHint": "LOW"
+}

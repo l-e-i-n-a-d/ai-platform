@@ -1,0 +1,12 @@
+{
+  "$schema": "../../execution/execution-request.schema.json",
+  "$expect": "ADR-0003 §3: no host path ever crosses the execution boundary. cwd is workspace-relative; an absolute path is the single most tempting violation and the one that ends portability.",
+  "$expectKeyword": "pattern",
+  "argv": ["mvn", "test"],
+  "cwd": "/home/daniel/code/order-service",
+  "envAllowlist": {},
+  "timeoutMs": 60000,
+  "resourceLimits": { "cpuMillis": 1000, "memoryBytes": 1073741824, "pids": 128, "diskBytes": 1073741824 },
+  "networkPolicy": { "mode": "NONE" },
+  "correlation": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "verify", "attempt": 1 }
+}

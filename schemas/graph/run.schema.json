@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/run.schema.json",
+  "title": "Run",
+  "description": "The durable record of a graph run (ADR-0008). This is the authoritative state: the HTTP call that dispatches a node attempt is an optimisation, not the record (ADR-0004 §7). Only the holder of the lease may transition a run.",
+  "type": "object",
+  "properties": {
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic concurrency token. Every write is guarded by both the expected version and a lease check (ADR-0008 §9).",
+      "minimum": 0
+    },
+    "graphId": { "type": "string" },
+    "graphVersionHash": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "Pinned at creation (ADR-0008 §2). Publishing a new definition never affects an in-flight run; there is no in-flight migration."
+    },
+    "status": {
+      "type": "string",
+      "description": "ADR-0008 §6. SUSPENDED is the normal consequence of closing a laptop — an expected, recoverable state, not a failure. Terminal states are immutable.",
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "AWAITING_APPROVAL",
+        "AWAITING_RETRY",
+        "SUSPENDED",
+        "SUCCEEDED",
+        "FAILED",
+        "CANCELLED",
+        "TIMED_OUT"
+      ]
+    },
+    "epoch": {
+      "type": "integer",
+      "description": "Bumped on lease takeover and on cancellation. Lets a stale orchestrator detect that it no longer speaks for this run.",
+      "minimum": 0
+    },
+    "lease": {
+      "type": "object",
+      "description": "ADR-0008 §8: exactly one orchestrator per run. This is a security control as well as a correctness one, because two orchestrators would produce duplicate external side effects.",
+      "properties": {
+        "holderId": { "type": "string", "minLength": 1 },
+        "acquiredAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+        "expiresAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+      },
+      "required": ["holderId", "acquiredAt", "expiresAt"],
+      "additionalProperties": false
+    },
+    "workItemRef": {
+      "type": "object",
+      "description": "The Jira issue this run serves, where there is one. Jira remains the system of record; this is a reference, not a copy.",
+      "properties": {
+        "system": { "const": "JIRA" },
+        "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,9}-[0-9]+$" }
+      },
+      "required": ["system", "key"],
+      "additionalProperties": false
+    },
+    "repositories": {
+      "type": "array",
+      "items": { "$ref": "../common/common.schema.json#/$defs/repositoryId" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "workspaceId": { "$ref": "../common/common.schema.json#/$defs/workspaceId" },
+    "variables": { "type": "object" },
+    "cancellationRequested": {
+      "type": "boolean",
+      "description": "ADR-0008 §14. Cancellation always stops new work and is best-effort for work in flight. Stated plainly because the opposite is routinely assumed."
+    },
+    "currentNodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "latestCheckpointId": { "type": "string" },
+    "initiatedBy": {
+      "type": "string",
+      "description": "The local developer who started the run. Self-asserted in V1 (ADR-0016 §4); the platform records what it can honestly attest to and no more."
+    },
+    "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "updatedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "completedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "failure": { "$ref": "#/$defs/failure" }
+  },
+  "required": [
+    "runId",
+    "version",
+    "graphId",
+    "graphVersionHash",
+    "status",
+    "epoch",
+    "repositories",
+    "cancellationRequested",
+    "initiatedBy",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "failure": {
+      "type": "object",
+      "properties": {
+        "category": { "$ref": "../common/common.schema.json#/$defs/failureCategory" },
+        "message": { "type": "string" },
+        "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "detailsRef": { "$ref": "../artifacts/artifact-ref.schema.json" }
+      },
+      "required": ["category", "message"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/approval/approval-record.schema.json",
+  "title": "ApprovalRecord",
+  "description": "A human decision on a consequential action (ADR-0009). The record binds to subjectHash — the content hash of exactly what was approved — and the engine re-verifies it on resume. Without that binding an approval is a time-of-check/time-of-use bug with a human in it.",
+  "type": "object",
+  "properties": {
+    "approvalId": { "type": "string", "minLength": 1 },
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "kind": {
+      "type": "string",
+      "description": "LOCAL_OPERATOR_CONSENT is self-asserted: the platform can attest that someone at the keyboard consented, not who they were. EXTERNAL_ATTESTATION borrows identity from a system that has it — a GitHub review, a Jira transition — and is the stronger form precisely because the platform is not the one asserting it.",
+      "enum": ["LOCAL_OPERATOR_CONSENT", "EXTERNAL_ATTESTATION"]
+    },
+    "requiredKind": {
+      "type": "string",
+      "description": "What policy demanded, computed as the strictest of the tool's side-effect class, the repository trust level and the graph node definition (ADR-0009 §2). Any layer may require a stronger kind; none may require a weaker one.",
+      "enum": ["LOCAL_OPERATOR_CONSENT", "EXTERNAL_ATTESTATION"]
+    },
+    "subjectHash": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+    "subjectRef": { "$ref": "../artifacts/artifact-ref.schema.json" },
+    "renderingHash": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "Hash of what the human was actually shown. Recorded separately from subjectHash because approving a rendering that differs from the subject is the failure this pair exists to detect."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING", "APPROVED", "REJECTED", "EXPIRED", "REVOKED"]
+    },
+    "decidedBy": {
+      "type": "string",
+      "description": "A local identity, or the verified external actor when kind is EXTERNAL_ATTESTATION."
+    },
+    "decidedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "expiresAt": {
+      "$ref": "../common/common.schema.json#/$defs/timestamp",
+      "description": "Approvals expire. An indefinitely valid approval on a run that resumes weeks later is an approval of something nobody is still thinking about."
+    },
+    "interactive": {
+      "type": "boolean",
+      "description": "False when approved non-interactively (ADR-0018 §4). Recorded rather than forbidden, so that a batch-approved run is visibly distinguishable in the audit trail from one a human actually looked at."
+    },
+    "externalRef": {
+      "type": "string",
+      "description": "Pull request review id, Jira transition id, or equivalent, when kind is EXTERNAL_ATTESTATION."
+    },
+    "rationale": { "type": "string" },
+    "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+  },
+  "required": [
+    "approvalId",
+    "runId",
+    "nodeId",
+    "kind",
+    "requiredKind",
+    "subjectHash",
+    "subjectRef",
+    "renderingHash",
+    "status",
+    "expiresAt",
+    "interactive",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "enum": ["APPROVED", "REJECTED"] } },
+        "required": ["status"]
+      },
+      "then": { "required": ["decidedBy", "decidedAt"] }
+    },
+    {
+      "if": {
+        "properties": { "kind": { "const": "EXTERNAL_ATTESTATION" }, "status": { "const": "APPROVED" } },
+        "required": ["kind", "status"]
+      },
+      "then": { "required": ["externalRef"] }
+    }
+  ]
+}

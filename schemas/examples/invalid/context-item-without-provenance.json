@@ -1,0 +1,35 @@
+{
+  "$schema": "../../context/context-bundle.schema.json",
+  "$expect": "ADR-0013: every item records how it was found, under whose identity, and why it was included. Without provenance the platform cannot explain why an agent saw a piece of content, and a missing-context failure is indistinguishable from a reasoning failure.",
+  "$expectKeyword": "required",
+  "bundleRef": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "runId": "run_01HQ8X2K4M9Z",
+  "nodeId": "gather_context",
+  "createdAt": "2026-08-15T12:00:00Z",
+  "budget": { "limit": 60000, "used": 512, "policyId": "default-implementation" },
+  "pins": {},
+  "items": [
+    {
+      "itemId": "item_1",
+      "sourceSystem": "REPOSITORY",
+      "sourceId": "src/main/java/Order.java",
+      "tokenCount": 512,
+      "trustClass": "UNTRUSTED",
+      "contentRef": {
+        "uri": "artifact://e3/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sizeBytes": 2048,
+        "contentType": "text/x-java",
+        "classification": {
+          "artifactType": "CONTEXT_BUNDLE",
+          "sensitivity": "INTERNAL",
+          "provenance": "RETRIEVED",
+          "redacted": false,
+          "retentionTier": "RUN_LIFECYCLE"
+        },
+        "createdAt": "2026-08-15T12:00:00Z"
+      }
+    }
+  ],
+  "excluded": []
+}
