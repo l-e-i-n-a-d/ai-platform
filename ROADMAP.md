@@ -1,93 +1,156 @@
-# AI Engineering Platform Roadmap
+# AI Engineering Platform — Roadmap
 
-## Phase 0 — Architectural Scaffold
-Status: Current
+## Phase 0 — Scaffold
 
-- repository structure
-- architecture
-- principles
-- terminology
-- system boundaries
-- initial ADRs
-- open architectural questions
+**Status: Current**
 
-## Phase 1 — Platform Foundation
+Goals:
 
-- Quarkus control-plane skeleton
-- Cosmos DB run/task state
-- Blob Storage artifacts
-- authentication/authorization
-- Key Vault integration
-- AKS workspace provisioning
-- GitHub integration
-- initial observability
+- establish architecture
+- establish principles
+- establish security guidance
+- establish evaluation strategy
+- establish terminology
+- establish ADR process
 
-Target:
-Create Run -> Create Workspace -> Execute Controlled Tool -> Persist Result -> Destroy Workspace
+No production implementation is required.
 
-## Phase 2 — Agent Runtime
+---
 
-- Python runtime
-- Model Gateway
-- Claude integration
-- GPT integration
-- tool contracts
-- structured outputs
-- iteration limits
-- retries
-- checkpointing
+## Phase 1 — Local Platform Foundation
 
-## Phase 3 — Graph Engine
+Goals:
 
-- declarative graph format
-- versioning
-- branching
-- loops
-- retries
+- local developer startup
+- Quarkus control plane
+- Python agent runtime
+- model gateway
+- basic graph execution
+- local executor
+- Cosmos DB persistence
+- Blob Storage artifact handling
+- basic Jira integration
+- basic Confluence integration
+- basic GitHub integration
+
+Success criterion:
+
+A developer can run a complete small engineering workflow locally.
+
+Example:
+
+```text
+Jira issue
+ -> context
+ -> plan
+ -> human approval
+ -> local code change
+ -> tests
+ -> Git branch
+ -> GitHub PR
+```
+
+---
+
+## Phase 2 — Durable Engineering Loops
+
+Goals:
+
 - checkpoints
-- human approval
-- failure handling
+- retries
+- repair loops
+- resumability
+- cancellation
+- deterministic verification
+- structured agent outputs
+- stronger tool policies
 
-## Phase 4 — Engineering Context
+---
 
-- Jira
-- Confluence
-- GitHub repository discovery
-- service catalog
-- repository/service graph
-- context ranking
-- progressive context construction
+## Phase 3 — Observability
 
-## Phase 5 — Engineering Automation
+Introduce:
 
-- implementation agent
-- testing agent
-- debugger
-- reviewer
-- technical writer
-- CI feedback loop
-- GitHub PR automation
-- Jira updates
-- documentation proposals
+- OpenTelemetry
+- Prometheus
+- Loki
+- Grafana
+- Alertmanager
 
-## Phase 6 — Evaluation and Optimization
+Add:
 
-- benchmark datasets
-- model comparison
-- context evaluation
-- trajectory evaluation
-- cost and latency tracking
-- regression testing
+- metrics
+- logs
+- traces
+- dashboards
+- alerts
 
-## Phase 7 — Dogfooding
+The platform should already have stable correlation IDs before this phase.
 
-Use the platform on selected platform-repository tasks, starting with low-risk work.
+---
 
-## v1 Non-Goals
+## Phase 4 — Evaluation Platform
 
-- autonomous production deployments
-- Kafka
-- dedicated graph database
-- unrestricted autonomous agents
-- uncontrolled multi-agent swarms
-- replacing Jira, Confluence or GitHub
+Build repeatable evaluations for:
+
+- models
+- agents
+- graphs
+- tools
+- context strategies
+- end-to-end engineering tasks
+
+Track:
+
+- correctness
+- success rate
+- recovery
+- latency
+- cost
+- security
+
+---
+
+## Phase 5 — Multi-Repository Workflows
+
+Support:
+
+- repository discovery
+- repository-specific instructions
+- cross-repository changes
+- coordinated pull requests
+- cross-repository context
+
+---
+
+## Phase 6 — Optional Kubernetes Execution
+
+Only pursue this phase if local execution reveals a concrete need.
+
+Potential reasons:
+
+- stronger isolation
+- resource limits
+- parallel execution
+- reproducibility
+- centralized execution
+- scale
+
+Kubernetes should implement the existing execution interface rather than changing graph or agent semantics.
+
+---
+
+## Phase 7 — Shared Hosted Platform
+
+Only if required by the organization.
+
+At this point revisit:
+
+- authentication
+- authorization
+- multi-user tenancy
+- centralized secret management
+- execution scheduling
+- operational ownership
+
+Microsoft Entra ID is intentionally deferred rather than assumed.

@@ -1,109 +1,302 @@
-# AI Engineering Platform Architecture
+# AI Engineering Platform — Architecture
+
+## Status
+
+**Phase:** Architectural scaffold / V1 design
+
+**V1 execution model:** Local-first
+
+**Future execution:** Kubernetes/AKS may be added as an alternative execution backend if justified.
+
+---
 
 ## 1. Purpose
 
-The AI Engineering Platform is a centralized control plane for executing reliable AI-assisted software engineering workflows across multiple repositories.
+The AI Engineering Platform is a shared engineering platform for reliable AI-assisted software development across multiple repositories.
 
-## 2. High-Level Architecture
+It coordinates:
+
+- Jira work
+- Confluence knowledge
+- GitHub repositories and pull requests
+- context retrieval
+- AI agents
+- model providers
+- engineering tools
+- local execution
+- verification
+- evaluation
+- observability
+
+The platform is designed as an engineering harness rather than a single autonomous agent.
+
+---
+
+## 2. V1 Architecture
 
 ```text
 Developer
-   |
-   v
-Platform API (Quarkus)
-   |
-   +--> Jira
-   +--> Confluence
-   +--> GitHub
-   |
-   v
-Context Engine
-   |
-   v
-Graph Engine
-   |
-   v
-Agent Runtime (Python)
-   |
-   v
-Model Gateway
-   |
-   v
-AKS isolated engineering workspace
-   |
-   +--> GitHub / CI
-   +--> tests / tools
-
-Operational state --> Cosmos DB
-Large artifacts   --> Blob Storage
-Secrets           --> Key Vault
-Identity          --> Entra ID / Workload Identity
+    |
+    v
+Local AI Engineering Platform
+    |
+    +------------------+------------------+
+    |                  |                  |
+    v                  v                  v
+  Jira             Confluence          GitHub
+    |                  |                  |
+    +------------------+------------------+
+                       |
+                       v
+                Context Engine
+                       |
+                       v
+                  Graph Engine
+                       |
+                       v
+                 Agent Runtime
+                    Python
+                       |
+                       v
+                 Model Gateway
+                  /                      Claude Sonnet   GPT
+                  \         /
+                   \       /
+                    v     v
+                Local Executor
+                       |
+                       v
+                Local Workspace
+                       |
+                       v
+                    Git / CI
 ```
 
-## 3. System-of-Record Boundaries
+Supporting persistence:
 
-Jira remains authoritative for work management. Confluence remains authoritative for product and engineering knowledge. GitHub remains authoritative for source code and pull requests.
+```text
+Azure Cosmos DB
+    -> operational state
 
-Cosmos DB stores AI platform operational state. Blob Storage stores large artifacts.
+Azure Blob Storage
+    -> large artifacts
 
-## 4. Control Plane
+Azure Key Vault
+    -> optional future centralized secret management
+```
 
-The Quarkus control plane owns APIs, work/run management, authorization, policy enforcement, graph lifecycle, integration contracts and durable execution metadata.
+---
 
-## 5. Agent Runtime
+## 3. Core Components
 
-The Python runtime executes constrained agents. An agent has an identity, objective, instructions, skills, tools, context, model configuration, iteration limits, policies and an output contract.
+### Quarkus Control Plane
 
-## 6. Graph Engine
+Responsible for:
 
-Important engineering workflows are explicit, versioned graphs supporting sequential execution, branching, loops, retries, checkpoints, approvals, timeouts and failure handling.
+- APIs
+- run lifecycle
+- durable execution state
+- graph lifecycle
+- policy enforcement
+- human approvals
+- integrations
+- coordination
+- telemetry metadata
 
-## 7. Context Engine
+It must not become an unrestricted command execution environment.
 
-The Context Engine progressively constructs task context from Jira, Confluence, GitHub, repository/service relationships, architecture information, CI results and previous run state.
+### Python Agent Runtime
 
-Do not indiscriminately load entire repositories or organizational knowledge into model context.
+Responsible for constrained agent execution.
 
-## 8. Repository / Service Graph
+Agents have explicit:
 
-The platform should model relationships between Jira issues, Confluence pages, repositories, services, APIs, Helm charts, Kubernetes workloads, CI pipelines and pull requests.
+- objectives
+- instructions
+- context
+- tools
+- policies
+- model configuration
+- iteration limits
+- timeouts
+- output contracts
 
-A dedicated graph database is not required for the initial architecture.
+### Graph Engine
 
-## 9. Execution Plane
+Represents workflows as explicit, versioned execution graphs.
 
-Agent execution occurs in isolated AKS workloads where practical. Workspaces should be ephemeral where possible.
+Potential capabilities:
 
-The control plane should not directly execute arbitrary repository commands.
+- sequence
+- branching
+- loops
+- retries
+- checkpoints
+- timeouts
+- approvals
+- recovery
+- resumability
 
-## 10. State and Eventing
+Graphs are workflow semantics, not a requirement for a graph database.
 
-Cosmos DB is the operational state store. Cosmos DB Change Feed may be used for state-driven processing.
+### Context Engine
 
-Kafka is not part of this architecture.
+Builds relevant context from:
 
-Azure Service Bus may be considered only when explicit durable queue semantics are demonstrated as necessary.
+- Jira
+- Confluence
+- GitHub
+- repositories
+- CI
+- architecture documentation
+- execution history
+- evaluations
 
-## 11. Security
+Context must be relevance-driven and traceable.
 
-Use least privilege, Entra ID, AKS Workload Identity, Key Vault, scoped GitHub permissions, policy-controlled tools and human approval for consequential operations.
+### Model Gateway
 
-Production access is denied by default.
+Provides a provider-neutral model interface.
 
-## 12. Observability
+Initial providers:
 
-Meaningful executions should record run ID, task ID, graph/version, node, agent, model, tool calls, duration, token/cost metadata, failures, retries, checkpoints and outcome.
+- Anthropic Claude / Claude Sonnet
+- OpenAI GPT
 
-Large payloads belong in Blob Storage; metadata belongs in Cosmos DB.
+Provider-specific SDK details remain behind the gateway.
 
-## 13. Model Gateway
+### Tool Layer
 
-Agents use a provider-neutral Model Gateway supporting Claude, GPT and future providers. Provider-specific behavior should be isolated behind the gateway.
+Exposes controlled capabilities to agents.
 
-## 14. Human Approval
+Examples:
 
-Approval is a first-class graph capability. Workflows must be able to pause and resume around approval gates.
+- repository search
+- file modification
+- build
+- tests
+- Git
+- GitHub
+- Jira
+- Confluence
+- CI
+- Kubernetes inspection for future deployments
 
-## 15. Status
+### Local Executor
 
-This document describes the target architecture. It does not imply implementation.
+The V1 execution backend.
+
+It provides controlled local workspaces for repository operations.
+
+The graph and agent layers must depend on an execution abstraction, not directly on local shell behavior.
+
+### Future Kubernetes Executor
+
+A future implementation of the same execution interface.
+
+```text
+Graph / Agent
+     |
+     v
+Execution Interface
+   /               v               v
+Local Executor   Kubernetes Executor
+V1               Future
+```
+
+Kubernetes-specific concerns must remain inside the Kubernetes executor.
+
+---
+
+## 4. Persistence
+
+Cosmos DB is the operational state store.
+
+Potential data:
+
+- work items
+- graph definitions
+- graph runs
+- nodes
+- checkpoints
+- agent executions
+- tool executions
+- model invocations
+- approvals
+- policies
+- evaluation results
+
+Blob Storage is for large artifacts.
+
+Do not introduce PostgreSQL.
+
+---
+
+## 5. External System Boundaries
+
+### Jira
+
+System of record for engineering work.
+
+### Confluence
+
+System of record for product and engineering documentation.
+
+### GitHub
+
+System of record for source code, branches, pull requests and CI.
+
+The platform coordinates these systems; it does not replace them.
+
+---
+
+## 6. Security
+
+V1 is local-first and does not require Microsoft Entra ID.
+
+Security still requires:
+
+- least privilege
+- explicit tool capabilities
+- repository boundaries
+- command restrictions
+- secret isolation
+- credential protection
+- human approvals
+- auditability
+
+If the platform becomes a centrally hosted multi-user service, authentication and authorization must be revisited as an explicit architectural decision.
+
+---
+
+## 7. Observability
+
+The architecture is designed to support:
+
+- OpenTelemetry
+- Prometheus
+- Loki
+- Grafana
+- Alertmanager
+
+The complete stack is not a V1 deployment requirement.
+
+Correlation identifiers should exist from the beginning:
+
+- request ID
+- work item ID
+- run ID
+- graph ID/version
+- node ID
+- agent ID
+- workspace ID
+- model invocation ID
+- tool invocation ID
+
+---
+
+## 8. Architectural Constraint
+
+Workflow semantics must remain independent of execution infrastructure.
+
+This allows V1 to remain simple and local while preserving an upgrade path to Kubernetes if future evidence justifies it.

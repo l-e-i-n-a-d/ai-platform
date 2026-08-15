@@ -12,7 +12,7 @@ The platform is intended to connect:
 - Azure / AKS for execution
 - Cosmos DB for operational state
 - Blob Storage for large artifacts
-- Key Vault and Entra ID for security
+- Key Vault for security
 - Claude and GPT through a provider-neutral model gateway
 
 ## Repository

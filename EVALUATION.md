@@ -1,74 +1,131 @@
-# AI Engineering Platform Evaluation
+# AI Engineering Platform — Evaluation
 
 ## Purpose
 
-Evaluate the platform as an engineering system, not merely as a model wrapper.
+The platform must evaluate the engineering harness, not merely individual models.
 
-Primary question:
+A stronger model does not necessarily produce a better engineering system.
 
-> Can the platform reliably complete real engineering work to an acceptable engineering standard?
+---
 
-## Dimensions
+## Evaluation Dimensions
 
-- task success
+Evaluate:
+
 - correctness
+- task completion
 - deterministic verification
 - context quality
 - tool effectiveness
+- graph effectiveness
 - recovery
+- reliability
 - cost
 - latency
-- security/policy compliance
+- security
 
-## Initial Benchmarks
+---
 
-Include:
+## Initial Benchmark Categories
 
-1. bug fixes
-2. unit tests
-3. refactoring
-4. API changes
-5. cross-repository changes
-6. Quarkus backend changes
-7. Angular frontend changes
-8. Helm changes
-9. Kubernetes changes
-10. CI/CD changes
-11. documentation changes
-12. architecture-aware changes
+### Java / Quarkus
 
-A flagship benchmark should test a cross-repository API change:
+- bug fixes
+- feature changes
+- API changes
+- tests
 
-Jira -> Confluence -> Quarkus service -> API contract -> Angular client -> tests -> CI -> PR.
+### Python
 
-## Model Evaluation
+- implementation
+- bug fixing
+- test repair
 
-Compare Claude, GPT and future models under equivalent task, context, tools, graph and verification conditions.
+### Angular
 
-## Harness Evaluation
+- UI changes
+- API integration
+- tests
 
-Also evaluate changes to graphs, context strategy, tools, prompts, policies and repository/service knowledge.
+### Helm / Kubernetes
 
-## Regression
+- chart changes
+- configuration changes
+- manifests
 
-Significant platform changes should run against a stable benchmark set.
+### CI/CD
 
-## Evaluation Metadata
+- pipeline changes
+- failed build repair
+- test failure repair
 
-Eventually capture:
+### Documentation
 
-- evaluation ID
-- task ID
-- graph/version
-- agent/version
-- model/version
-- context/version
-- tool/version
-- success
-- verification result
-- iterations
-- duration
-- token usage
-- estimated cost
-- failure reason
-- artifacts
+- Jira requirement interpretation
+- Confluence updates
+- architecture documentation
+
+### Cross Repository
+
+- API + backend + frontend
+- shared library changes
+- coordinated pull requests
+
+---
+
+## Representative Workflow
+
+```text
+Jira
+ ↓
+Confluence
+ ↓
+Repository context
+ ↓
+Plan
+ ↓
+Human approval
+ ↓
+Implementation
+ ↓
+Tests
+ ↓
+CI
+ ↓
+Repair loop
+ ↓
+Verification
+ ↓
+GitHub PR
+```
+
+---
+
+## Evaluation Reproducibility
+
+Evaluations should record:
+
+- model
+- model configuration
+- prompt/instructions
+- graph version
+- tool versions
+- repository revision
+- context sources
+- execution environment
+- outcome
+- cost
+- latency
+
+---
+
+## Future Observability Integration
+
+Evaluation data should eventually integrate with the observability platform using OpenTelemetry-compatible correlation identifiers.
+
+Future stack:
+
+- Prometheus
+- Loki
+- Grafana
+- Alertmanager
