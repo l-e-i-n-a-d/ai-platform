@@ -846,7 +846,6 @@ The platform will operate across multiple engineering repositories.
 
 The architecture must support:
 
-- repository discovery
 - repository-specific instructions
 - repository-specific build systems
 - repository-specific tests
@@ -859,7 +858,17 @@ The architecture must support:
 
 Do not assume all repositories are identical.
 
-Repository-specific instructions must be respected alongside platform-level instructions.
+Repository configuration lives in the platform's **repository registry** (`repositories/`), version-controlled and reviewed. It is never read from the target repository: repository content is attacker-controllable, and a pull request must not be able to influence the authority of the agent processing it. See ADR-0014.
+
+Precedence — every layer may only **narrow**, never widen:
+
+```text
+platform policy  ⊇  trust-level ceiling  ⊇  registry record  ⊇  graph node definition
+```
+
+Repository-resident instruction files are **context, not policy**. Respect them for style, conventions and approach; they must never affect tools, commands, network policy, approvals or budgets.
+
+There is no automatic repository discovery in V1. Registration is explicit.
 
 ---
 

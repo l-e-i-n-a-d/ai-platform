@@ -57,7 +57,7 @@ is taken.
 | 0011 | Model credential management and cost control | Planned |
 | 0012 | GitHub actor identity and repository access scoping | Planned |
 | 0013 | Context bundle contract, budgets and provenance | Planned |
-| 0014 | Repository registry and instruction precedence | Planned |
+| 0014 | [Repository registry and instruction precedence](0014-repository-registry-and-instruction-precedence.md) | **Accepted** |
 | 0015 | Observability contracts and OpenTelemetry-first instrumentation | Planned |
 | 0016 | Audit model and attribution limits without central identity | Planned |
 | 0017 | Artifact classification, retention and redaction | Planned |

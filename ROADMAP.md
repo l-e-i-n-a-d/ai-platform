@@ -29,6 +29,7 @@ Goals:
 - local executor
 - local persistence (see ADR-0007)
 - local artifact storage
+- repository registry and capability ceilings (see ADR-0014)
 - basic Jira integration
 - basic Confluence integration
 - basic GitHub integration
@@ -113,13 +114,13 @@ Track:
 
 ## Phase 5 — Multi-Repository Workflows
 
-Support:
+Repository identity, registration, capability ceilings and repository-scoped context are
+delivered in Phase 1 (ADR-0014). This phase adds only the coordination problems:
 
-- repository discovery
-- repository-specific instructions
 - cross-repository changes
 - coordinated pull requests
 - cross-repository context
+- repository discovery as a proposal mechanism
 
 ---
 

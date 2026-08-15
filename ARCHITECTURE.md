@@ -209,6 +209,18 @@ command execution is limited to named, repository-declared command profiles with
 parameters and no shell.
 See [ADR-0005](docs/decisions/0005-tool-contract-and-authorization-choke-point.md).
 
+### Repository Registry
+
+The platform's record of which repositories exist, what they are, and how much authority the
+platform may exercise in each: stable identity, trust level, capability ceiling, command
+profiles, tool image, network allowlist, context policy and required verification checks.
+
+Registry records are version-controlled configuration in this repository, reviewed like code,
+and are **never read from the target repository**. Every layer of the precedence chain may only
+narrow capabilities. Repository-resident instruction files are context, not policy.
+
+See [ADR-0014](docs/decisions/0014-repository-registry-and-instruction-precedence.md).
+
 ### Local Executor
 
 The V1 execution backend, implementing the execution interface
