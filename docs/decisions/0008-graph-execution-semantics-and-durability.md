@@ -162,7 +162,7 @@ definition and therefore versioned and pinned. Retry state — `attempt`, `nextA
 
 Failure categories: `TRANSIENT`, `MODEL_ERROR`, `BUDGET_EXCEEDED`, `INVALID_OUTPUT`,
 `TOOL_DENIED`, `VERIFICATION_FAILED`, `EXECUTION_ERROR`, `INTEGRATION_ERROR`, `INDETERMINATE`,
-`CANCELLED`.
+`CANCELLED`, and — added by ADR-0009 — `APPROVAL_REJECTED` and `APPROVAL_EXPIRED`.
 
 Retry is driven by **category, not message text**, which keeps definitions readable and
 testable. Each attempt keeps its own execution record; records are never overwritten, because

@@ -334,6 +334,11 @@ Security still requires:
 - human approvals
 - auditability
 
+Approvals have two kinds with different assurance — interactive local operator consent, and
+external attestation borrowed from GitHub or Jira. See
+[ADR-0009](docs/decisions/0009-human-approval-model.md) and
+[docs/architecture/approvals.md](docs/architecture/approvals.md).
+
 If the platform becomes a centrally hosted multi-user service, authentication and authorization must be revisited as an explicit architectural decision.
 
 ---

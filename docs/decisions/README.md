@@ -52,7 +52,7 @@ is taken.
 | 0006 | [Local execution isolation and credential handling](0006-local-execution-isolation-and-credentials.md) | **Accepted** |
 | [0007](0007-operational-persistence-and-local-first-storage.md) | Operational persistence and local-first storage | **Accepted** |
 | 0008 | [Graph execution semantics, versioning and durability](0008-graph-execution-semantics-and-durability.md) | **Accepted** |
-| 0009 | Human approval model and authorization without central identity | Planned |
+| 0009 | [Human approval model and authorization without central identity](0009-human-approval-model.md) | **Accepted** |
 | 0010 | Model gateway interface and provider neutrality | Planned |
 | 0011 | Model credential management and cost control | Planned |
 | 0012 | GitHub actor identity and repository access scoping | Planned |
