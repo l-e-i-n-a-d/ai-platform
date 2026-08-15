@@ -1,0 +1,19 @@
+# Contract models generated from schemas/**/*.schema.json (ADR-0024).
+#
+# Deliberately dependency-free: generated dataclasses convert to and from plain
+# dicts rather than depending on a validation or serialisation library, because
+# validation is performed against the JSON Schema itself (ADR-0024 §4).
+
+[project]
+name = "aiplatform-contracts"
+version = "1.0.0"
+description = "Generated Python models for the V1 domain contracts."
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["aiplatform_contracts*"]
