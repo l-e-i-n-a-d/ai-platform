@@ -109,8 +109,19 @@ per-run           total cost ceiling
 per-day           per-developer ceiling
 ```
 
-Each is the minimum of platform default, repository `budgetCeiling` and node definition.
-Exceeding one fails the node with `BUDGET_EXCEEDED` — never a warning, never auto-raised.
+Each is the minimum of platform default, repository `budgetCeiling` and node definition, clamped
+to what remains at the enclosing level (ADR-0026 §3), so a node may receive less than it asks for.
+The run-level ceiling is **mandatory**: a loop of bounded nodes is still unbounded spend unless
+something computes the total.
+
+Cost is denominated in integer micro-units of the run's currency (ADR-0026 §1) — 1 000 000 units
+is 1.00 of the ISO 4217 code on the `GraphRun`. Integers because float accumulation makes a
+spending limit approximate, which for a spending limit is the same as unenforced.
+
+Exhausting a ceiling **suspends** the run with `BUDGET_EXCEEDED` rather than failing it, so an
+operator can raise the ceiling and resume without discarding checkpointed work. It is never a
+warning and never auto-raised: raising a budget is a consequential, audited action. It is never
+retryable either — retrying a bound that was hit re-hits it.
 
 Consumption is recorded **durably before the next invocation**. A crashed and resumed run must
 not receive a fresh budget, or a crash loop becomes unbounded spend.

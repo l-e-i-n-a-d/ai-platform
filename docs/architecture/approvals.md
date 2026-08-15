@@ -67,11 +67,19 @@ text. An approval screen an agent can influence would defeat every preceding con
 ## 4. Rules
 
 - one approval covers exactly one `subjectHash` — no standing, blanket or run-wide approvals
-- every approval has a TTL; expiry fails the node with `APPROVAL_EXPIRED` and never re-requests
-  silently
-- rejection fails the node with `APPROVAL_REJECTED` and a rationale
-- approvals may be revoked before the action is taken
-- expired and revoked approvals fail closed
+- every approval has a TTL; expiry fails the node with `APPROVAL_EXPIRED`, which ADR-0025 §1
+  treats as a **non-decision** rather than a refusal — nobody said no, the clock ran out, which on
+  a local-first platform is what a weekend looks like
+- an expired approval may be re-requested when the graph's `retryableCategories` permits it. The
+  re-request copies `subjectHash` and `subjectRef` unchanged and **never re-executes the node**:
+  re-execution could change what is being approved, and the record would then attest to something
+  no human saw. It is never silent — a new approval is created and a human is asked again
+- re-requests are bounded by the node's attempt budget and by `GraphRun.approvalDeadline`, so a
+  forgotten run cannot re-ask indefinitely while holding a workspace lease
+- rejection fails the node with `APPROVAL_REJECTED` and a rationale; revocation before the action
+  is taken fails it with `APPROVAL_REVOKED`. Both are terminal and neither may appear in
+  `retryableCategories` — a refusal a policy can retry around is not a refusal
+- rejected and revoked approvals fail closed
 - no agent may request, waive, downgrade or record an approval
 - approvals may only be given on the platform instance holding the run's lease — no
   cross-developer queues in V1

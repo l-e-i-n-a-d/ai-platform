@@ -70,6 +70,12 @@ for more by asking differently. A retry gets a fresh grant.
 Contents: `allowedTools` (explicit ids and versions, never wildcards), `maxSideEffect`,
 `repositoryScope`, `pathScope`, `externalScope`, `commandProfiles`, `budget`, `notAfter`.
 
+`pathScope` is a **map keyed by `repositoryId`**, not a flat list of globs (ADR-0023 §3). With
+several repositories in one workspace, `src/**` names two directories, and a grant meant for one
+repository would silently permit writes in the other. Keying by repository makes that
+unrepresentable rather than merely discouraged; every key must name a repository the run actually
+has, which is checked when the grant is minted.
+
 ---
 
 ## 4. Command profiles
