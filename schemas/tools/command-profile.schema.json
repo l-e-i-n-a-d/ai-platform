@@ -5,6 +5,7 @@
   "description": "A named, argv-fixed command declared by a repository (ADR-0005 §5). workspace.run_profile(profileId, parameters) is the only route to command execution: there is no tool that accepts a shell string or a free-form argv array from a model. Parameters are substituted as discrete argv elements, never concatenated into a shell, and no shell is involved at any layer.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "profileId": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_.-]{0,63}$",
@@ -54,6 +55,7 @@
     }
   },
   "required": [
+    "schemaVersion",
     "profileId",
     "description",
     "argv",

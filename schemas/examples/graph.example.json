@@ -1,5 +1,5 @@
 {
-  "$schema": "../graph/graph-definition.schema.json",
+  "$schema": "../graph/graph.schema.json",
   "schemaVersion": "1",
   "graphId": "jira-issue-to-pull-request",
   "title": "Jira issue to pull request",

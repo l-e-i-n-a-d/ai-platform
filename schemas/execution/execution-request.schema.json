@@ -5,6 +5,7 @@
   "description": "Submitted to the execution interface (ADR-0003 §4). The shape encodes the six substitutability rules of ADR-0003 §3: argv arrays rather than shell strings, an explicit environment allowlist rather than inheritance, artifact references rather than paths, and mandatory timeout, limits and network policy.",
   "type": "object",
   "properties": {
+    "protocolVersion": { "const": "1", "description": "ADR-0024 \u00a75: wire messages are versioned as a conversation. A mismatch fails fast at startup rather than being negotiated." },
     "argv": {
       "type": "array",
       "description": "Fully resolved argument vector. ADR-0005 §5: this is produced by the platform from a named command profile. A model never authors it, and no shell is involved at any layer.",
@@ -12,9 +13,8 @@
       "minItems": 1
     },
     "cwd": {
-      "type": "string",
-      "description": "Workspace-relative working directory, validated against the grant's pathScope. Absolute paths are rejected: ADR-0003 §3 forbids any host path crossing this boundary.",
-      "pattern": "^(?!/)(?!.*\\.\\.).*$"
+      "$ref": "../common/common.schema.json#/$defs/relativePath",
+      "description": "Workspace-relative working directory. ADR-0023 §6: it must name a repository directory or a path beneath one, so every executed command has an unambiguous owning repository and the same path rule governs cwd, capability scope, artifacts and checkpoints. Absolute paths and traversal segments are rejected rather than normalised — ADR-0003 §3 forbids any host path crossing this boundary, and ADR-0023 §2 rejects rather than repairs, because normalising before authorising is how traversal checks are bypassed."
     },
     "envAllowlist": {
       "type": "object",
@@ -30,6 +30,6 @@
     "stdinRef": { "$ref": "../artifacts/artifact-ref.schema.json" },
     "correlation": { "$ref": "../common/common.schema.json#/$defs/correlation" }
   },
-  "required": ["argv", "cwd", "envAllowlist", "timeoutMs", "resourceLimits", "networkPolicy", "correlation"],
+  "required": ["protocolVersion", "argv", "cwd", "envAllowlist", "timeoutMs", "resourceLimits", "networkPolicy", "correlation"],
   "additionalProperties": false
 }

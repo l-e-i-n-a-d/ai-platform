@@ -5,6 +5,7 @@
   "description": "A repository the platform is allowed to work in (ADR-0014). The record is the capability ceiling for that repository. ADR-0014 §5 fixes the precedence: platform policy, then trust-level ceiling, then this record, then the graph node definition — each layer may only narrow. Files resident in the target repository affect context only and have zero capability effect, which is what stops a repository the platform is editing from rewriting the configuration that governs editing it.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "repositoryId": { "$ref": "../common/common.schema.json#/$defs/repositoryId" },
     "displayName": { "type": "string", "minLength": 1 },
     "remotes": {
@@ -49,7 +50,7 @@
         "budgetCeiling": {
           "type": "object",
           "properties": {
-            "maxCostUnitsPerRun": { "type": "number", "minimum": 0 },
+            "maxCostUnitsPerRun": { "type": "integer", "minimum": 0 },
             "maxInvocationsPerAttempt": { "type": "integer", "minimum": 0 }
           },
           "additionalProperties": false
@@ -103,6 +104,7 @@
     }
   },
   "required": [
+    "schemaVersion",
     "repositoryId",
     "displayName",
     "remotes",

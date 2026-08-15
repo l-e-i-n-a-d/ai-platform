@@ -26,10 +26,10 @@ expensive thing to change once runs exist.
 |---|---|---|
 | `common/` | shared primitives: identifiers, correlation, network policy, resource limits | — |
 | `execution/` | `ExecutionRequest`, `ExecutionResult`, `WorkspaceSpec` | ADR-0003, ADR-0006 |
-| `tools/` | `ToolDescriptor`, `CapabilityGrant`, `CommandProfile` | ADR-0005 |
+| `tools/` | `Tool`, `CapabilityGrant`, `CommandProfile` | ADR-0005 |
 | `agent/` | `AgentExecutionRequest`, `AgentExecutionResult` | ADR-0004 |
 | `graph/` | `GraphDefinition`, `Condition`, `Run`, `NodeExecution`, `Checkpoint` | ADR-0008 |
-| `approval/` | `ApprovalRecord` | ADR-0009 |
+| `approval/` | `Approval` | ADR-0009 |
 | `model/` | `ModelRequest`, `ModelResponse` | ADR-0010, ADR-0011 |
 | `context/` | `ContextBundle` | ADR-0013 |
 | `registry/` | `RepositoryRecord` | ADR-0014 |

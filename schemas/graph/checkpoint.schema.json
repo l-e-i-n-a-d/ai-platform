@@ -5,9 +5,12 @@
   "description": "Written at every node boundary, in the same transactional batch as the node's terminal status (ADR-0008 §10). Intra-agent iteration checkpoints are explicitly out of scope: an agent attempt is the unit of retry, and a partially completed agent loop is re-run, not resumed.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "checkpointId": { "type": "string", "minLength": 1 },
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "afterNodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "afterIteration": { "$ref": "../common/common.schema.json#/$defs/iteration" },
+    "afterAttempt": { "$ref": "../common/common.schema.json#/$defs/attempt" },
     "sequence": { "type": "integer", "minimum": 0 },
     "graphVariablesRef": { "$ref": "../artifacts/artifact-ref.schema.json" },
     "workspaceStateRef": { "$ref": "#/$defs/workspaceState" },
@@ -18,7 +21,7 @@
     },
     "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
   },
-  "required": ["checkpointId", "runId", "afterNodeId", "sequence", "workspaceStateRef", "createdAt"],
+  "required": ["schemaVersion", "checkpointId", "runId", "afterNodeId", "afterIteration", "afterAttempt", "sequence", "workspaceStateRef", "createdAt"],
   "additionalProperties": false,
   "$defs": {
     "workspaceState": {

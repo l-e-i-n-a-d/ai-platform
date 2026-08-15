@@ -1,5 +1,5 @@
 {
-  "$schema": "../../graph/node-execution.schema.json",
+  "$schema": "../../graph/node-run.schema.json",
   "$expect": "ADR-0008 Security Impact: an INDETERMINATE node must be visible and actionable to an operator. A silently swallowed indeterminate side effect is worse than a loud failure, so the reconciliation detail is mandatory.",
   "$expectKeyword": "required",
   "runId": "run_01HQ8X2K4M9Z",

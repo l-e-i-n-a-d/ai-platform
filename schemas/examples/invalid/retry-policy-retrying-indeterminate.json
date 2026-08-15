@@ -1,5 +1,5 @@
 {
-  "$schema": "../../graph/graph-definition.schema.json",
+  "$schema": "../../graph/graph.schema.json",
   "$expect": "ADR-0008 §7: INDETERMINATE is never auto-retried, because a side effect may or may not have occurred. Retrying it is how a platform posts two pull requests for one issue.",
   "$expectKeyword": "enum",
   "schemaVersion": "1",

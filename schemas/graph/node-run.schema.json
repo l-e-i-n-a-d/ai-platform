@@ -1,12 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-platform.internal/schemas/v1/graph/node-execution.schema.json",
-  "title": "NodeExecution",
-  "description": "The durable record of one node attempt (ADR-0008 §7). Records are never overwritten by a retry: each attempt keeps its own record, because evaluation depends on being able to see how failures evolved.",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/node-run.schema.json",
+  "title": "NodeRun",
+  "description": "The durable record of one node attempt (ADR-0008 §7). Identity is the four-part key (runId, nodeId, iteration, attempt) fixed by ADR-0021 §1. Records are never overwritten by a retry: each attempt keeps its own record, because evaluation depends on being able to see how failures evolved.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "iteration": { "$ref": "../common/common.schema.json#/$defs/iteration" },
     "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" },
     "version": { "type": "integer", "minimum": 0 },
     "nodeType": {
@@ -43,9 +45,19 @@
       "description": "claimedOutput after successful schema validation. Only this may be referenced by edge conditions."
     },
     "outputValid": { "type": "boolean" },
-    "iterations": { "type": "integer", "minimum": 0 },
-    "stopReason": { "type": "string" },
-    "failure": { "$ref": "run.schema.json#/$defs/failure" },
+    "stopReason": {
+      "type": "string",
+      "description": "Why a loop node stopped iterating (ADR-0021 §4). Recording which bound fired is what makes 'the loop burned the budget' diagnosable without reading logs. Present only on loop nodes; the iteration count is derivable from the NodeRun records and is deliberately not denormalised here, where it could disagree with them.",
+      "enum": [
+        "EXIT_CONDITION_MET",
+        "MAX_ITERATIONS",
+        "BODY_FAILED",
+        "BUDGET_EXCEEDED",
+        "CANCELLED",
+        "DEADLINE_EXCEEDED"
+      ]
+    },
+    "failure": { "$ref": "graph-run.schema.json#/$defs/failure" },
     "nextAttemptAt": {
       "$ref": "../common/common.schema.json#/$defs/timestamp",
       "description": "Set when status is AWAITING_RETRY."
@@ -67,7 +79,7 @@
     "startedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
     "endedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
   },
-  "required": ["runId", "nodeId", "attempt", "version", "nodeType", "status"],
+  "required": ["schemaVersion", "runId", "nodeId", "iteration", "attempt", "version", "nodeType", "status"],
   "additionalProperties": false,
   "allOf": [
     {

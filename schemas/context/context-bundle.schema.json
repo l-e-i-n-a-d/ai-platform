@@ -5,7 +5,12 @@
   "description": "An immutable, content-addressed set of retrieved material assembled for one node attempt (ADR-0013). bundleRef is sha256 of the canonical serialisation. The bundle records not only what was included but why, what was excluded and under whose identity each item was retrieved, so the platform can answer 'why did the agent see this?' from durable state.",
   "type": "object",
   "properties": {
-    "bundleRef": { "$ref": "../common/common.schema.json#/$defs/sha256" },
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
+    "bundleRef": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "x-hashExclude": true,
+      "description": "This bundle's own content hash. Excluded from the canonical form before hashing (ADR-0020 §4), because a document cannot contain the hash of itself."
+    },
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
     "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
@@ -89,7 +94,7 @@
       }
     }
   },
-  "required": ["bundleRef", "runId", "nodeId", "createdAt", "budget", "pins", "items", "excluded"],
+  "required": ["schemaVersion", "bundleRef", "runId", "nodeId", "createdAt", "budget", "pins", "items", "excluded"],
   "additionalProperties": false,
   "$defs": {
     "item": {
@@ -115,8 +120,9 @@
           "enum": ["DIRECT", "PATH_MATCH", "SEARCH", "LINK_TRAVERSAL", "GRAPH_STATE"]
         },
         "relevanceScore": {
-          "type": "number",
-          "description": "Comparable within a bundle only. Scores from different bundles or policies are not on a shared scale."
+          "type": "integer",
+          "minimum": 0,
+          "description": "Comparable within a bundle only. Scores from different bundles or policies are not on a shared scale. Integral because the bundle is content-hashed and ADR-0020 §2 excludes floating point from hashed documents, where Java and Python number formatting diverge."
         },
         "tokenCount": { "type": "integer", "minimum": 0 },
         "inclusionReason": { "type": "string", "minLength": 1 },

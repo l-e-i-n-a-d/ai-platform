@@ -5,6 +5,7 @@
   "description": "The provider-neutral request accepted by the model gateway (ADR-0010 §1). Provider-specific SDK calls live behind the gateway and nowhere else. ADR-0010 §2: the gateway does not run the tool-calling loop — it normalises tool calls into requests, and the tool layer decides and executes. Most agent frameworks do run the loop in this position, so this is the default to resist.",
   "type": "object",
   "properties": {
+    "protocolVersion": { "const": "1", "description": "ADR-0024 \u00a75: wire messages are versioned as a conversation. A mismatch fails fast at startup rather than being negotiated." },
     "modelRef": {
       "type": "string",
       "description": "A logical name resolved by the gateway, not a provider model id. Callers never name a provider model directly.",
@@ -127,7 +128,7 @@
     },
     "correlation": { "$ref": "../common/common.schema.json#/$defs/correlation" }
   },
-  "required": ["modelRef", "system", "messages", "budgets", "correlation"],
+  "required": ["protocolVersion", "modelRef", "system", "messages", "budgets", "correlation"],
   "additionalProperties": false,
   "$defs": {
     "contentBlock": {

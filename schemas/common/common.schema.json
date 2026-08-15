@@ -16,8 +16,20 @@
     },
     "attempt": {
       "type": "integer",
-      "description": "1-based attempt counter for a node execution. A retry increments it (ADR-0008 §11).",
+      "description": "1-based attempt counter within one iteration of a node. A retry increments it (ADR-0008 §11, ADR-0021 §2). The retry budget is scoped per iteration, so each iteration starts again at 1.",
       "minimum": 1
+    },
+    "iteration": {
+      "type": "integer",
+      "description": "1-based loop iteration counter (ADR-0021 §2). Nodes outside a loop are always on iteration 1; there is no zero and no absent case, so the NodeRun key is uniform. Together with attempt this distinguishes 'the second try at round one' from 'the first try at round two', which a single counter cannot.",
+      "minimum": 1
+    },
+    "relativePath": {
+      "type": "string",
+      "description": "A canonical workspace-relative path (ADR-0023 §2). The first segment is always a repositoryId, because the workspace holds one directory per repository. Non-canonical paths are rejected, never normalised: normalising before an authorization decision is the standard traversal-bypass pattern, so exactly one spelling of a path is accepted. NFC normalisation is required but is not expressible as a pattern and is enforced by the tool layer.",
+      "pattern": "^repo_[0-9a-zA-Z]{4,64}(/(?!\\.{1,2}(/|$))[^/\\\\\u0000-\u001f]+)*$",
+      "minLength": 1,
+      "maxLength": 1024
     },
     "workspaceId": {
       "type": "string",
@@ -89,20 +101,22 @@
         "INDETERMINATE",
         "CANCELLED",
         "APPROVAL_REJECTED",
-        "APPROVAL_EXPIRED"
+        "APPROVAL_EXPIRED",
+        "DEFINITION_UNAVAILABLE"
       ]
     },
     "correlation": {
       "type": "object",
-      "description": "Telemetry correlation block. ADR-0003 §4: carried, never interpreted. ADR-0015 §7: these values are forbidden as metric labels.",
+      "description": "Telemetry correlation block. ADR-0003 §4: carried, never interpreted. ADR-0015 §7: these values are forbidden as metric labels. Carries the full four-part NodeRun key (ADR-0021 §6) so a log line, a span and a stored record name the same thing.",
       "properties": {
         "runId": { "$ref": "#/$defs/runId" },
         "nodeId": { "$ref": "#/$defs/nodeId" },
+        "iteration": { "$ref": "#/$defs/iteration" },
         "attempt": { "$ref": "#/$defs/attempt" },
         "agentId": { "type": "string" },
         "traceparent": { "$ref": "#/$defs/traceparent" }
       },
-      "required": ["runId", "nodeId", "attempt"],
+      "required": ["runId", "nodeId", "iteration", "attempt"],
       "additionalProperties": false
     },
     "globList": {
@@ -110,14 +124,20 @@
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     },
-    "pathScope": {
+    "pathScopeEntry": {
       "type": "object",
-      "description": "Allow/deny globs evaluated against workspace-relative paths. Deny wins.",
+      "description": "Allow/deny globs for one repository. Globs are repository-relative: 'src/**' inside this entry can only ever mean that path inside the repository the entry is keyed by. Glob semantics are restricted (ADR-0023 §4): '*' matches within one segment, '**' matches whole segments, and there is no brace expansion or regular-expression syntax.",
       "properties": {
         "allow": { "$ref": "#/$defs/globList" },
         "deny": { "$ref": "#/$defs/globList" }
       },
       "additionalProperties": false
+    },
+    "pathScope": {
+      "type": "object",
+      "description": "Path authority, keyed by repositoryId (ADR-0023 §3). Keying by repository is what makes DEF-02 structurally impossible: under a flat glob list, 'src/**' matched every repository in the workspace, so a grant for one repository silently authorised the same paths in another. Here, authority for a repository is not expressible unless that repository is a key. Evaluation is default-deny and deny wins (ADR-0023 §4).",
+      "propertyNames": { "$ref": "#/$defs/repositoryId" },
+      "additionalProperties": { "$ref": "#/$defs/pathScopeEntry" }
     },
     "networkPolicy": {
       "type": "object",

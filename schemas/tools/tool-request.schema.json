@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/tools/tool-request.schema.json",
+  "title": "ToolRequest",
+  "description": "A request to invoke a Tool, submitted by the agent runtime to the control-plane tool layer (ADR-0005 §4). It is a request, not an invocation: nothing has been authorized when this message is constructed, and the model's proposal and the platform's decision are deliberately separate documents. Authorization, approval and execution all happen on the control-plane side of this boundary, so the runtime cannot widen its own authority by asking differently.",
+  "type": "object",
+  "properties": {
+    "protocolVersion": { "const": "1", "description": "ADR-0024 §5: wire messages are versioned as a conversation. A mismatch fails fast at startup rather than being negotiated." },
+    "toolCallId": {
+      "type": "string",
+      "description": "The model-emitted identifier of the originating tool call, carried through to the ToolResult and to the TOOL_RESULT message. Without it, a result cannot be matched to the call that produced it when several calls are in flight.",
+      "minLength": 1
+    },
+    "toolId": { "$ref": "../common/common.schema.json#/$defs/toolId" },
+    "toolVersion": { "$ref": "../common/common.schema.json#/$defs/semver" },
+    "callbackToken": {
+      "type": "string",
+      "description": "The single-attempt token issued in the AgentExecutionRequest. ADR-0004 §10: the tool layer resolves the capability grant from this token rather than from anything the runtime asserts, which is what makes the grant unforgeable from the runtime side. The request carries no runId, nodeId, iteration or attempt for the same reason — the subject is derived from the token, never claimed by the caller.",
+      "minLength": 1
+    },
+    "input": {
+      "type": "object",
+      "description": "Validated against the Tool's closed inputSchema before anything else happens. ADR-0005 §2: anything undeclared is rejected rather than ignored, so a model cannot smuggle extra fields past validation into an integration client."
+    },
+    "idempotencyKey": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "Required when the Tool declares idempotency KEYED. Derived by the platform per ADR-0021 §5 as sha256 over (runId, nodeId, iteration, toolId, canonical input) — it includes iteration so a loop that legitimately calls the same tool twice is not silently deduplicated, and excludes attempt so a retry of the same logical call is. A runtime-supplied value is rejected: an agent able to choose its own idempotency key can defeat deduplication by varying it."
+    },
+    "requestedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+  },
+  "required": ["protocolVersion", "toolCallId", "toolId", "toolVersion", "callbackToken", "input", "requestedAt"],
+  "additionalProperties": false
+}

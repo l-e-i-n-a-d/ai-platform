@@ -1,5 +1,5 @@
 {
-  "$schema": "../../approval/approval-record.schema.json",
+  "$schema": "../../approval/approval.schema.json",
   "$expect": "ADR-0009: EXTERNAL_ATTESTATION borrows identity from a system that has it. Without the external reference there is nothing to corroborate, so it is really LOCAL_OPERATOR_CONSENT wearing a stronger label.",
   "$expectKeyword": "required",
   "approvalId": "appr_1",

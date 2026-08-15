@@ -5,15 +5,18 @@
   "description": "Minted by the control plane per node attempt (ADR-0005 §4). Derived from the graph node definition intersected with the repository registry's capability ceiling, never from anything the model produced. Monotonically non-increasing: no operation grows a grant mid-attempt, and a retry receives a fresh grant so a failed attempt leaves no residual authority. The agent runtime never handles a grant, only the attempt token that resolves to it.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "grantId": { "type": "string", "minLength": 1 },
     "subject": {
       "type": "object",
+      "description": "The NodeRun attempt this grant authorises, using the four-part key of ADR-0021 §1. iteration is required: without it, two attempts in different loop rounds would share a subject.",
       "properties": {
         "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
         "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+        "iteration": { "$ref": "../common/common.schema.json#/$defs/iteration" },
         "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" }
       },
-      "required": ["runId", "nodeId", "attempt"],
+      "required": ["runId", "nodeId", "iteration", "attempt"],
       "additionalProperties": false
     },
     "allowedTools": {
@@ -36,7 +39,10 @@
       "items": { "$ref": "../common/common.schema.json#/$defs/repositoryId" },
       "uniqueItems": true
     },
-    "pathScope": { "$ref": "../common/common.schema.json#/$defs/pathScope" },
+    "pathScope": {
+      "$ref": "../common/common.schema.json#/$defs/pathScope",
+      "description": "ADR-0023 §3. The key set must equal repositoryScope exactly — a grant cannot constrain paths in a repository it does not scope, nor scope a repository whose paths it leaves unconstrained. That equality is a cross-field rule JSON Schema cannot express; it is checked when the grant is minted, and INV-89 records where."
+    },
     "externalScope": {
       "type": "object",
       "properties": {
@@ -69,7 +75,7 @@
       "properties": {
         "maxInvocations": { "type": "integer", "minimum": 0 },
         "maxWallClockMs": { "type": "integer", "minimum": 1 },
-        "maxCostUnits": { "type": "number", "minimum": 0 },
+        "maxCostUnits": { "type": "integer", "minimum": 0 },
         "maxDenials": {
           "type": "integer",
           "description": "Denial circuit breaker (ADR-0005 §6). Exceeding it fails the node with TOOL_DENIED, which surfaces a wrong grant instead of letting a model spend its whole budget rediscovering that it may not do something.",
@@ -85,6 +91,7 @@
     }
   },
   "required": [
+    "schemaVersion",
     "grantId",
     "subject",
     "allowedTools",

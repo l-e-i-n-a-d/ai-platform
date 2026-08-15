@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/execution/workspace.schema.json",
+  "title": "Workspace",
+  "description": "The durable record of an isolated, reconstructible, credential-free materialisation of one or more repositories for exactly one GraphRun (ADR-0003 §7, ADR-0006). WorkspaceSpec is the creation input; this is the record. The record exists because a workspace outlives the process that created it: after a crash the platform must be able to tell whether a workspace is still leased, reclaimable or quarantined, and losing that knowledge means either leaking disk or destroying a workspace another process is using. Layout is fixed by ADR-0023 §1: one directory per repositoryId directly beneath the root.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 §5: stored documents are versioned as data. One version exists in V1." },
+    "workspaceId": { "$ref": "../common/common.schema.json#/$defs/workspaceId" },
+    "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
+    "status": {
+      "type": "string",
+      "description": "CREATING -> READY -> LEASED, then RELEASED -> DESTROYED on success, QUARANTINED -> DESTROYED on a failed run with bounded retention, or EXPIRED when the lease is lost and the workspace becomes reclaimable. QUARANTINED is a distinct state rather than delayed destruction because a workspace kept for diagnosis must not be handed to another run.",
+      "enum": ["CREATING", "READY", "LEASED", "RELEASED", "EXPIRED", "QUARANTINED", "DESTROYED"]
+    },
+    "toolImageDigest": {
+      "type": "string",
+      "description": "The digest-pinned image actually used (ADR-0006 §5). Recorded rather than re-derived, because reproducing a run means reproducing the toolchain it ran against.",
+      "pattern": "^[^\\s]+@sha256:[0-9a-f]{64}$"
+    },
+    "repositories": {
+      "type": "array",
+      "description": "What was materialised, with the commit each repository was resolved to. Together with the patch series this reconstructs the workspace (ADR-0003 §6), which is why losing a workspace is recoverable rather than fatal. Each repositoryId is the name of its directory beneath the workspace root (ADR-0023 §1).",
+      "items": { "$ref": "../common/common.schema.json#/$defs/repoRef" },
+      "minItems": 1
+    },
+    "lease": {
+      "type": "object",
+      "description": "Exclusive. Two runs never share a checkout, and no run can reach another run's workspace or the developer's own repositories. Expiry makes the workspace collectable rather than silently shared.",
+      "properties": {
+        "holderId": { "type": "string", "minLength": 1 },
+        "expiresAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+      },
+      "required": ["holderId", "expiresAt"],
+      "additionalProperties": false
+    },
+    "executionMode": {
+      "type": "string",
+      "description": "container is the default and the only mode with the isolation guarantees of ADR-0006 §4. unsafe-host-exec is an escape hatch that is disabled by default, requires a configuration change rather than a run flag, and is recorded here and on every audit entry so evaluation results produced under it can be excluded from comparison.",
+      "enum": ["container", "unsafe-host-exec"]
+    },
+    "quotaBytes": { "type": "integer", "minimum": 1 },
+    "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "lastUsedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" },
+    "destroyedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+  },
+  "required": [
+    "schemaVersion",
+    "workspaceId",
+    "runId",
+    "status",
+    "toolImageDigest",
+    "repositories",
+    "executionMode",
+    "quotaBytes",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "$comment": "A leased workspace with no lease record is indistinguishable from an abandoned one, which is precisely the ambiguity the record exists to remove.",
+      "if": { "properties": { "status": { "const": "LEASED" } }, "required": ["status"] },
+      "then": { "required": ["lease"] }
+    },
+    {
+      "$comment": "Destruction must be dated: retention of quarantined workspaces is bounded, and an undated terminal state cannot be swept.",
+      "if": { "properties": { "status": { "const": "DESTROYED" } }, "required": ["status"] },
+      "then": { "required": ["destroyedAt"] }
+    }
+  ]
+}

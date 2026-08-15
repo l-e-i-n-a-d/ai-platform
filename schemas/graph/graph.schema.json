@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-platform.internal/schemas/v1/graph/graph-definition.schema.json",
-  "title": "GraphDefinition",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/graph.schema.json",
+  "title": "Graph",
   "description": "A workflow, expressed as declarative data (ADR-0008 §1). Contains no code and no expressions beyond the restricted condition language. Definitions are immutable and content-addressed: editing produces a new version identified by the content hash of its canonical form, and a run pins the version it started with for its entire life. ADR-0008 §16: graphs are authored by humans. An agent may propose a definition as a reviewable artifact, but no agent may author, mutate or select a definition for a live run.",
   "type": "object",
   "properties": {
-    "schemaVersion": { "const": "1" },
+    "schemaVersion": { "const": "1", "description": "ADR-0024 §5: stored documents are versioned as data. One version exists in V1." },
     "graphId": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$" },
     "title": { "type": "string", "minLength": 1 },
     "description": { "type": "string" },
@@ -131,7 +131,7 @@
           "properties": {
             "maxIterations": { "type": "integer", "minimum": 1 },
             "maxTokens": { "type": "integer", "minimum": 1 },
-            "maxCostUnits": { "type": "number", "minimum": 0 }
+            "maxCostUnits": { "type": "integer", "minimum": 0 }
           },
           "required": ["maxIterations", "maxTokens"],
           "additionalProperties": false

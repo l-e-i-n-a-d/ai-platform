@@ -5,6 +5,7 @@
   "description": "The provider-neutral response produced by the model gateway (ADR-0010 §1). Usage and cost recorded here are the gateway's own measurements and are authoritative: ADR-0004 §9 forbids taking them from the agent runtime's summary.",
   "type": "object",
   "properties": {
+    "protocolVersion": { "const": "1", "description": "ADR-0024 \u00a75: wire messages are versioned as a conversation. A mismatch fails fast at startup rather than being negotiated." },
     "modelInvocationId": { "type": "string", "minLength": 1 },
     "content": {
       "type": "array",
@@ -101,7 +102,7 @@
       "additionalProperties": false
     }
   },
-  "required": ["modelInvocationId", "finishReason", "usage", "providerModelId", "latencyMs"],
+  "required": ["protocolVersion", "modelInvocationId", "finishReason", "usage", "providerModelId", "latencyMs"],
   "additionalProperties": false,
   "allOf": [
     {

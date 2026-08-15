@@ -11,5 +11,5 @@
     }
   ],
   "budgets": { "maxInputTokens": 120000, "maxOutputTokens": 4096, "timeoutMs": 120000 },
-  "correlation": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "implement", "attempt": 1 }
+  "correlation": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "implement", "iteration": 1, "attempt": 1 }
 }

@@ -1,5 +1,5 @@
 {
-  "$schema": "../../tools/tool-descriptor.schema.json",
+  "$schema": "../../tools/tool.schema.json",
   "$expect": "ADR-0005 §2: inputSchema must be closed, so a model cannot smuggle undeclared fields past validation into an integration client.",
   "$expectKeyword": "required",
   "id": "jira.issue.update",

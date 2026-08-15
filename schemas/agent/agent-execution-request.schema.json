@@ -11,9 +11,14 @@
     },
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
+    "iteration": { "$ref": "../common/common.schema.json#/$defs/iteration" },
     "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" },
     "traceparent": { "$ref": "../common/common.schema.json#/$defs/traceparent" },
     "agentId": { "type": "string", "minLength": 1 },
+    "agentVersionHash": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "description": "The exact Agent definition to execute, taken from GraphRun.agentPins (ADR-0022 §3). Naming the version rather than only the agent is what makes the execution record reproducible and what stops an agent edit from changing an in-flight run."
+    },
     "objective": { "type": "string", "minLength": 1 },
     "instructions": {
       "type": "array",
@@ -24,10 +29,10 @@
       "$ref": "../common/common.schema.json#/$defs/sha256",
       "description": "Fetched by reference via GET /v1/context-bundles/{ref}, not inlined. Costs a round trip per node attempt; keeps the request small and the bundle content-addressed."
     },
-    "toolDescriptors": {
+    "tools": {
       "type": "array",
       "description": "Descriptors only — no implementations, no endpoints, no credentials. The runtime cannot invoke a tool except through the callback.",
-      "items": { "$ref": "../tools/tool-descriptor.schema.json" }
+      "items": { "$ref": "../tools/tool.schema.json" }
     },
     "outputSchema": { "$ref": "../common/common.schema.json#/$defs/jsonSchema" },
     "budgets": {
@@ -35,7 +40,7 @@
       "properties": {
         "maxIterations": { "type": "integer", "minimum": 1 },
         "maxTokens": { "type": "integer", "minimum": 1 },
-        "maxCostUnits": { "type": "number", "minimum": 0 },
+        "maxCostUnits": { "type": "integer", "minimum": 0 },
         "deadline": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
       },
       "required": ["maxIterations", "maxTokens", "deadline"],
@@ -52,7 +57,7 @@
     },
     "callbackToken": {
       "type": "string",
-      "description": "Bound to (runId, nodeId, attempt) and valid until the attempt deadline. ADR-0004 §10: this token is the bearer of the capability grant — the tool layer resolves the grant from the token, so the runtime cannot widen its own authority by asking differently. Single-attempt; a retry gets a new token and a new grant.",
+      "description": "Bound to (runId, nodeId, iteration, attempt) and valid until the attempt deadline. ADR-0004 §10: this token is the bearer of the capability grant — the tool layer resolves the grant from the token, so the runtime cannot widen its own authority by asking differently. Single-attempt; a retry gets a new token and a new grant.",
       "minLength": 1
     }
   },
@@ -60,12 +65,14 @@
     "protocolVersion",
     "runId",
     "nodeId",
+    "iteration",
     "attempt",
     "agentId",
+    "agentVersionHash",
     "objective",
     "instructions",
     "contextBundleRef",
-    "toolDescriptors",
+    "tools",
     "outputSchema",
     "budgets",
     "callbackToken"

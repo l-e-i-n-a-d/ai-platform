@@ -1,5 +1,5 @@
 {
-  "$schema": "../../tools/tool-descriptor.schema.json",
+  "$schema": "../../tools/tool.schema.json",
   "$expect": "ADR-0005 §3 and §8: EXTERNAL_WRITE requires an idempotency key, so that running the same node twice leaves one branch, one pull request and one comment.",
   "$expectKeyword": "enum",
   "id": "jira.issue.comment",

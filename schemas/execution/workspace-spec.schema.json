@@ -5,6 +5,7 @@
   "description": "Passed to createWorkspace() (ADR-0003 §1). One workspace per run, not per node (ADR-0003 §7), held under an exclusive lease so two runs never share a checkout.",
   "type": "object",
   "properties": {
+    "protocolVersion": { "const": "1", "description": "ADR-0024 \u00a75: wire messages are versioned as a conversation. A mismatch fails fast at startup rather than being negotiated." },
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "repositories": {
       "type": "array",
@@ -24,6 +25,6 @@
       "minimum": 1000
     }
   },
-  "required": ["runId", "repositories", "toolImage", "resourceLimits", "leaseTtlMs"],
+  "required": ["protocolVersion", "runId", "repositories", "toolImage", "resourceLimits", "leaseTtlMs"],
   "additionalProperties": false
 }

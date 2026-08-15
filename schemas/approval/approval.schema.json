@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-platform.internal/schemas/v1/approval/approval-record.schema.json",
-  "title": "ApprovalRecord",
+  "$id": "https://ai-platform.internal/schemas/v1/approval/approval.schema.json",
+  "title": "Approval",
   "description": "A human decision on a consequential action (ADR-0009). The record binds to subjectHash — the content hash of exactly what was approved — and the engine re-verifies it on resume. Without that binding an approval is a time-of-check/time-of-use bug with a human in it.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "approvalId": { "type": "string", "minLength": 1 },
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
@@ -49,6 +50,7 @@
     "createdAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
   },
   "required": [
+    "schemaVersion",
     "approvalId",
     "runId",
     "nodeId",

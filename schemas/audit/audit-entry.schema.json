@@ -5,6 +5,7 @@
   "description": "An append-only record of an attempted consequential action (ADR-0016). Written fail-closed: if the entry cannot be persisted, the action does not proceed. Retained independently of telemetry — traces may be sampled and logs may be dropped, audit may not. ADR-0016 is explicit about the limits of what V1 can attest to; see the assurance field.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "auditId": { "type": "string", "minLength": 1 },
     "sequence": {
       "type": "integer",
@@ -15,6 +16,7 @@
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "nodeId": { "$ref": "../common/common.schema.json#/$defs/nodeId" },
     "attempt": { "$ref": "../common/common.schema.json#/$defs/attempt" },
+    "iteration": { "$ref": "../common/common.schema.json#/$defs/iteration" },
     "graphId": { "type": "string" },
     "graphVersionHash": { "$ref": "../common/common.schema.json#/$defs/sha256" },
     "agentId": { "type": "string" },
@@ -67,6 +69,7 @@
     "entryHash": { "$ref": "../common/common.schema.json#/$defs/sha256" }
   },
   "required": [
+    "schemaVersion",
     "auditId",
     "sequence",
     "timestamp",

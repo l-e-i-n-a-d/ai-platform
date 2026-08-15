@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/tools/tool-result.schema.json",
+  "title": "ToolResult",
+  "description": "The outcome of a ToolRequest, returned by the control-plane tool layer (ADR-0005 §4). A denial, a pending approval and a failure are all results — the runtime is told what happened rather than left to infer it from an error. Output is returned as data and is treated as UNTRUSTED by the agent runtime: it is rendered where the model protocol expects tool output, never where it expects platform instructions.",
+  "type": "object",
+  "properties": {
+    "protocolVersion": { "const": "1", "description": "ADR-0024 §5: wire messages are versioned as a conversation. A mismatch fails fast at startup rather than being negotiated." },
+    "toolCallId": {
+      "type": "string",
+      "description": "Correlates to the ToolRequest and to the TOOL_RESULT message that carries this result back to the model.",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "description": "COMPLETED: executed, output present. DENIED: authorization refused; the reason is model-facing so the agent can adapt rather than retry blindly. AWAITING_APPROVAL: a human decision is required and the node attempt is suspended (ADR-0009). FAILED: attempted and failed. INDETERMINATE: the platform cannot establish whether the external effect occurred — distinct from FAILED because a blind retry of an EXTERNAL_WRITE could duplicate it (ADR-0005 §3).",
+      "enum": ["COMPLETED", "DENIED", "AWAITING_APPROVAL", "FAILED", "INDETERMINATE"]
+    },
+    "output": {
+      "type": "object",
+      "description": "Present when status is COMPLETED. Validated against the Tool's outputSchema before it is returned, so a misbehaving integration cannot inject an arbitrary shape into the model's context."
+    },
+    "outputRef": {
+      "$ref": "../artifacts/artifact-ref.schema.json",
+      "description": "Large output is stored as an artifact and referenced, rather than inlined into a message that then has to fit a context budget."
+    },
+    "denial": {
+      "type": "object",
+      "description": "Present when status is DENIED. The reason is deliberately model-facing and specific enough to be actionable, but never discloses what the grant would have permitted — that would turn a denial into an enumeration oracle for the agent's own boundary.",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": [
+            "TOOL_NOT_GRANTED",
+            "REPOSITORY_OUT_OF_SCOPE",
+            "PATH_OUT_OF_SCOPE",
+            "SIDE_EFFECT_EXCEEDS_CEILING",
+            "INPUT_VALIDATION_FAILED",
+            "BUDGET_EXCEEDED",
+            "GRANT_EXPIRED"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1 }
+      },
+      "required": ["reason", "message"],
+      "additionalProperties": false
+    },
+    "approvalId": {
+      "type": "string",
+      "description": "Present when status is AWAITING_APPROVAL. Names the Approval the node attempt is suspended on.",
+      "minLength": 1
+    },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "category": { "$ref": "../common/common.schema.json#/$defs/failureCategory" },
+        "message": { "type": "string", "minLength": 1 },
+        "detailsRef": { "$ref": "../artifacts/artifact-ref.schema.json" }
+      },
+      "required": ["category", "message"],
+      "additionalProperties": false
+    },
+    "sideEffectClass": {
+      "$ref": "../common/common.schema.json#/$defs/sideEffectClass",
+      "description": "Echoed from the Tool so the record of what happened does not depend on resolving the tool version later."
+    },
+    "durationMs": { "$ref": "../common/common.schema.json#/$defs/durationMs" },
+    "completedAt": { "$ref": "../common/common.schema.json#/$defs/timestamp" }
+  },
+  "required": ["protocolVersion", "toolCallId", "status", "sideEffectClass", "completedAt"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "$comment": "A denial with no reason is indistinguishable from a bug, and gives the agent nothing to adapt to.",
+      "if": { "properties": { "status": { "const": "DENIED" } }, "required": ["status"] },
+      "then": { "required": ["denial"] }
+    },
+    {
+      "$comment": "Suspension must name the approval it is waiting on, or resume has nothing to key on.",
+      "if": { "properties": { "status": { "const": "AWAITING_APPROVAL" } }, "required": ["status"] },
+      "then": { "required": ["approvalId"] }
+    },
+    {
+      "$comment": "ADR-0005 §3: a failure without a category cannot be classified as retryable or not, so the graph engine would have to guess.",
+      "if": { "properties": { "status": { "enum": ["FAILED", "INDETERMINATE"] } }, "required": ["status"] },
+      "then": { "required": ["failure"] }
+    },
+    {
+      "$comment": "Completed means there is output. Inline or by reference, but not neither: an agent handed an empty success has no way to distinguish it from a silent failure.",
+      "if": { "properties": { "status": { "const": "COMPLETED" } }, "required": ["status"] },
+      "then": {
+        "anyOf": [
+          { "required": ["output"] },
+          { "required": ["outputRef"] }
+        ]
+      }
+    }
+  ]
+}

@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-platform.internal/schemas/v1/graph/run.schema.json",
-  "title": "Run",
+  "$id": "https://ai-platform.internal/schemas/v1/graph/graph-run.schema.json",
+  "title": "GraphRun",
   "description": "The durable record of a graph run (ADR-0008). This is the authoritative state: the HTTP call that dispatches a node attempt is an optimisation, not the record (ADR-0004 §7). Only the holder of the lease may transition a run.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "runId": { "$ref": "../common/common.schema.json#/$defs/runId" },
     "version": {
       "type": "integer",
@@ -15,6 +16,12 @@
     "graphVersionHash": {
       "$ref": "../common/common.schema.json#/$defs/sha256",
       "description": "Pinned at creation (ADR-0008 §2). Publishing a new definition never affects an in-flight run; there is no in-flight migration."
+    },
+    "agentPins": {
+      "type": "object",
+      "description": "agentId to agentVersionHash, resolved exactly once at run creation (ADR-0022 §3) in the same durable write that pins graphVersionHash. From that instant the run uses these versions for every attempt, retry and resume, including after a week-long approval pause. Without this the graph pins only the agent's name, so editing an agent changes the behaviour of in-flight runs of an already-pinned graph.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+      "additionalProperties": { "$ref": "../common/common.schema.json#/$defs/sha256" }
     },
     "status": {
       "type": "string",
@@ -81,6 +88,7 @@
     "failure": { "$ref": "#/$defs/failure" }
   },
   "required": [
+    "schemaVersion",
     "runId",
     "version",
     "graphId",

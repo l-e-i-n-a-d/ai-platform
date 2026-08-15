@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-platform.internal/schemas/v1/tools/tool-descriptor.schema.json",
-  "title": "ToolDescriptor",
-  "description": "The declared contract of a tool (ADR-0005 §2). Descriptors are data and are immutable per version. The agent runtime holds descriptors only, never implementations, and cannot invoke a tool by any path other than the control-plane choke point.",
+  "$id": "https://ai-platform.internal/schemas/v1/tools/tool.schema.json",
+  "title": "Tool",
+  "description": "The declared contract of a versioned tool (ADR-0005 §2). Tools are data and are immutable per version. The agent runtime holds tool definitions only, never implementations, and cannot invoke a tool by any path other than the control-plane choke point.",
   "type": "object",
   "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 \u00a75: stored documents are versioned as data. One version exists in V1." },
     "id": { "$ref": "../common/common.schema.json#/$defs/toolId" },
     "version": { "$ref": "../common/common.schema.json#/$defs/semver" },
     "title": { "type": "string", "minLength": 1 },
@@ -68,6 +69,7 @@
     }
   },
   "required": [
+    "schemaVersion",
     "id",
     "version",
     "title",

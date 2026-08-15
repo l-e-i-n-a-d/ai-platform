@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.internal/schemas/v1/agent/agent.schema.json",
+  "title": "Agent",
+  "description": "An immutable, content-addressed agent definition (ADR-0022 §1). An Agent is declarative data, never code. Editing one produces a new version rather than mutating the existing definition, because a run pins a version for its entire life and an in-place edit would silently change the behaviour of work already in flight. The definition deliberately omits the objective and the output schema: those are per-node, live in the Graph, and are already pinned by graphVersionHash (ADR-0022 §2). An agent is reusable behaviour; a node is one specific use of it.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": "1", "description": "ADR-0024 §5: stored documents are versioned as data. One version exists in V1." },
+    "agentId": {
+      "type": "string",
+      "description": "Names the agent, not the definition. Stable across versions; this is what a Graph references.",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+    },
+    "agentVersionHash": {
+      "$ref": "../common/common.schema.json#/$defs/sha256",
+      "x-hashExclude": true,
+      "description": "Names the exact definition: sha256 of its canonical form per ADR-0020. Excluded from the canonical form before hashing, since a document cannot contain its own hash. Assigned at publication, not by the author.",
+      "readOnly": true
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "systemInstructions": {
+      "type": "array",
+      "description": "Platform-authored instruction blocks. ADR-0004 §8: untrusted content — repository files, issue text, page bodies, pull-request comments — must never appear here. It belongs in the ContextBundle, where it is marked UNTRUSTED and rendered where the protocol expects data rather than instructions.",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "defaultModelPolicy": {
+      "type": "object",
+      "description": "The agent's default model. A node may override it. Expressed as either a capability selector or a concrete pinned reference; the selector form exists so an agent definition need not be re-published when a provider retires a model version.",
+      "oneOf": [
+        {
+          "properties": {
+            "selector": { "type": "string", "minLength": 1 }
+          },
+          "required": ["selector"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "modelRef": {
+              "type": "string",
+              "description": "A logical name resolved by the model gateway, not a provider model id (ADR-0010 §1). Callers never name a provider model directly.",
+              "minLength": 1
+            }
+          },
+          "required": ["modelRef"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "defaultBudgets": {
+      "type": "object",
+      "description": "Defaults for the agent loop. maxIterations bounds the agent's internal reason-act loop within one node attempt — it is not the graph loop bound of ADR-0021 §4, which is a property of a loop node.",
+      "properties": {
+        "maxIterations": { "type": "integer", "minimum": 1 },
+        "maxTokens": { "type": "integer", "minimum": 1 },
+        "maxCostUnits": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["maxIterations", "maxTokens"],
+      "additionalProperties": false
+    },
+    "capabilityCeiling": {
+      "type": "object",
+      "description": "The most this agent may ever be granted, extending the derivation chain of ADR-0014 §5: platform policy contains trust-level ceiling contains registry record contains agent ceiling contains node request. Monotonically non-increasing at every step. Its value is that a general-purpose agent can be denied IRREVERSIBLE tools once, centrally, instead of in every node that uses it. Validated against platform policy at publication (ADR-0022 §6), so an over-broad agent cannot be published and then discovered in production.",
+      "properties": {
+        "allowedTools": {
+          "type": "array",
+          "items": { "$ref": "../common/common.schema.json#/$defs/toolId" }
+        },
+        "maxSideEffect": { "$ref": "../common/common.schema.json#/$defs/sideEffectClass" },
+        "commandProfiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["allowedTools", "maxSideEffect"],
+      "additionalProperties": false
+    },
+    "outputContractStyle": {
+      "type": "string",
+      "description": "STRUCTURED: the agent is expected to produce output validating against the node's declared output schema. FREEFORM: prose, permissible only where no downstream transition depends on the shape.",
+      "enum": ["STRUCTURED", "FREEFORM"]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "title",
+    "description",
+    "systemInstructions",
+    "defaultModelPolicy",
+    "defaultBudgets",
+    "capabilityCeiling",
+    "outputContractStyle"
+  ],
+  "additionalProperties": false
+}

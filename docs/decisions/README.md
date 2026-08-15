@@ -38,8 +38,9 @@ Proposed
 
 ## Index
 
-Numbering follows the planned decision set below, not creation order. All eighteen decisions
-identified by the 2026-08-15 architecture review are now recorded.
+Numbering follows the planned decision set below, not creation order. Decisions 0001–0018 are the
+set identified by the 2026-08-15 architecture review. Decisions 0019–0024 close the V1 contract
+gaps found while writing `docs/contracts/v1-domain-contracts.md`.
 
 | # | Title | Status |
 |---|---|---|
@@ -61,6 +62,12 @@ identified by the 2026-08-15 architecture review are now recorded.
 | 0016 | [Audit model and attribution limits without central identity](0016-audit-model-and-attribution-limits.md) | **Accepted** |
 | 0017 | [Artifact classification, retention and redaction](0017-artifact-classification-retention-and-redaction.md) | **Accepted** |
 | 0018 | [Developer entry surface: CLI in V1, UI deferred](0018-developer-entry-surface-cli.md) | **Accepted** |
+| 0019 | [Canonical domain vocabulary](0019-canonical-domain-vocabulary.md) | **Accepted** |
+| 0020 | [Canonical serialisation and content hashing](0020-canonical-serialisation-and-hashing.md) | **Accepted** |
+| 0021 | [NodeRun identity: iteration and attempt](0021-noderun-identity-iteration-and-attempt.md) | **Accepted** |
+| 0022 | [Agent definition, versioning and pinning](0022-agent-definition-versioning-and-pinning.md) | **Accepted** |
+| 0023 | [Multi-repository workspace layout and path scoping](0023-multi-repository-workspace-layout.md) | **Accepted** |
+| 0024 | [Contract source of truth, code generation and schema versioning](0024-contract-source-of-truth-and-codegen.md) | **Accepted** |
 
 Deferred questions, documented but not yet decided: eventing mechanism; Kubernetes executor;
 hosted multi-user identity; Key Vault adoption; webhook ingestion; evaluation gating

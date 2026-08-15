@@ -1,5 +1,5 @@
 {
-  "$schema": "../../tools/tool-descriptor.schema.json",
+  "$schema": "../../tools/tool.schema.json",
   "$expect": "ADR-0005 §3: IRREVERSIBLE tools always require human approval. Class is declared on the tool and is not negotiable per call.",
   "$expectKeyword": "const",
   "id": "github.pull_request.merge",

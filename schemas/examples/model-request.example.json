@@ -1,6 +1,7 @@
 {
   "$schema": "../model/model-request.schema.json",
   "$comment": "The second iteration of an agent loop. This is the shape DEF-01 made inexpressible: the assistant's TOOL_CALL turn is present in history, followed by the TOOL_RESULT correlated to it by toolCallId. Note that the tool result is carried as ordinary content — the gateway advertised the tool and normalised the call, but the tool layer decided and executed it (ADR-0010 §2).",
+  "protocolVersion": "1",
   "modelRef": "reasoning.default",
   "system": [
     "You are a software engineer working in a prepared workspace.",
@@ -54,6 +55,7 @@
   "correlation": {
     "runId": "run_01HQ8X2K4M9Z",
     "nodeId": "locate-owner",
+    "iteration": 1,
     "attempt": 1,
     "agentId": "repository-analyst",
     "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"

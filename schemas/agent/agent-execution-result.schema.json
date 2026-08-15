@@ -22,8 +22,15 @@
       "type": "object",
       "description": "Claimed, not validated. Present when status is COMPLETED."
     },
-    "iterations": { "type": "integer", "minimum": 0 },
-    "stopReason": { "type": "string" },
+    "agentLoopIterations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many times the agent's internal reason-act loop ran during this one node attempt (ADR-0004 §7). Deliberately not called 'iteration': that name belongs to the graph loop round in NodeRun identity (ADR-0021 §1), and the two counters are unrelated. One node attempt has exactly one NodeRun.iteration and may have many agentLoopIterations."
+    },
+    "stopReason": {
+      "type": "string",
+      "description": "Why the agent loop stopped. Free text in V1: the agent runtime's internal stop conditions are not yet a closed set, unlike the graph loop's, and forcing an enum here would invite mapping unrelated causes onto the wrong constant."
+    },
     "failure": {
       "type": "object",
       "properties": {
@@ -35,7 +42,7 @@
       "additionalProperties": false
     }
   },
-  "required": ["protocolVersion", "status", "iterations"],
+  "required": ["protocolVersion", "status", "agentLoopIterations"],
   "additionalProperties": false,
   "allOf": [
     {

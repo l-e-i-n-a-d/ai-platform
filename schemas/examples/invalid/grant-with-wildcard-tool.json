@@ -3,7 +3,7 @@
   "$expect": "ADR-0005 §4: allowedTools lists explicit tool ids and versions, never a wildcard. A grant that can be widened by pattern is not a grant.",
   "$expectKeyword": "pattern",
   "grantId": "grant_bad",
-  "subject": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "implement", "attempt": 1 },
+  "subject": { "runId": "run_01HQ8X2K4M9Z", "nodeId": "implement", "iteration": 1, "attempt": 1 },
   "allowedTools": [{ "id": "*", "version": "1.0.0" }],
   "maxSideEffect": "IRREVERSIBLE",
   "repositoryScope": ["repo_orderservice"],

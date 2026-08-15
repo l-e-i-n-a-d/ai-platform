@@ -1,5 +1,6 @@
 {
-  "$schema": "../tools/tool-descriptor.schema.json",
+  "$schema": "../tools/tool.schema.json",
+  "schemaVersion": "1",
   "id": "github.pull_request.create",
   "version": "1.0.0",
   "title": "Create a pull request",

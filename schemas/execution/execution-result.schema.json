@@ -5,6 +5,7 @@
   "description": "Returned by await() or poll() (ADR-0003 §4). A non-zero exit code is a result, not an error: a failing test is the normal case in a repair loop. The error taxonomy is reserved for the executor failing to run the command at all.",
   "type": "object",
   "properties": {
+    "protocolVersion": { "const": "1", "description": "ADR-0024 \u00a75: wire messages are versioned as a conversation. A mismatch fails fast at startup rather than being negotiated." },
     "status": {
       "type": "string",
       "enum": ["COMPLETED", "TIMED_OUT", "CANCELLED", "RESOURCE_EXCEEDED", "EXECUTOR_ERROR"]
@@ -39,7 +40,7 @@
       }
     }
   },
-  "required": ["status", "stdoutRef", "stderrRef", "durationMs", "networkDenials"],
+  "required": ["protocolVersion", "status", "stdoutRef", "stderrRef", "durationMs", "networkDenials"],
   "additionalProperties": false,
   "allOf": [
     {

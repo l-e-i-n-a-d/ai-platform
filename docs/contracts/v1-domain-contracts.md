@@ -54,12 +54,12 @@ the ADRs and schemas. The mapping below is exact; §10 OQ-01 asks which set shou
 
 | This document | ADR / schema name | Artifact |
 |---|---|---|
-| `Graph` | GraphDefinition | [`schemas/graph/graph-definition.schema.json`](../../schemas/graph/graph-definition.schema.json) |
-| `GraphRun` | Run | [`schemas/graph/run.schema.json`](../../schemas/graph/run.schema.json) |
+| `Graph` | GraphDefinition | [`schemas/graph/graph.schema.json`](../../schemas/graph/graph.schema.json) |
+| `GraphRun` | Run | [`schemas/graph/graph-run.schema.json`](../../schemas/graph/graph-run.schema.json) |
 | `GraphNode` | node (embedded in the definition) | `graph-definition.schema.json#/$defs/node` |
-| `NodeRun` | NodeExecution | [`schemas/graph/node-execution.schema.json`](../../schemas/graph/node-execution.schema.json) |
+| `NodeRun` | NodeExecution | [`schemas/graph/node-run.schema.json`](../../schemas/graph/node-run.schema.json) |
 | `Agent` | agent definition | **no schema** — see §5.5 and OQ-02 |
-| `Tool` | ToolDescriptor | [`schemas/tools/tool-descriptor.schema.json`](../../schemas/tools/tool-descriptor.schema.json) |
+| `Tool` | Tool | [`schemas/tools/tool.schema.json`](../../schemas/tools/tool.schema.json) |
 | `ToolRequest` | — | **no schema** — see §5.7 and OQ-03 |
 | `ToolResult` | — | **no schema** — see §5.8 and OQ-03 |
 | `ContextBundle` | ContextBundle | [`schemas/context/context-bundle.schema.json`](../../schemas/context/context-bundle.schema.json) |
@@ -68,7 +68,7 @@ the ADRs and schemas. The mapping below is exact; §10 OQ-01 asks which set shou
 | `ExecutionRequest` | ExecutionRequest | [`schemas/execution/execution-request.schema.json`](../../schemas/execution/execution-request.schema.json) |
 | `ExecutionResult` | ExecutionResult | [`schemas/execution/execution-result.schema.json`](../../schemas/execution/execution-result.schema.json) |
 | `Checkpoint` | Checkpoint | [`schemas/graph/checkpoint.schema.json`](../../schemas/graph/checkpoint.schema.json) |
-| `Approval` | ApprovalRecord | [`schemas/approval/approval-record.schema.json`](../../schemas/approval/approval-record.schema.json) |
+| `Approval` | Approval | [`schemas/approval/approval.schema.json`](../../schemas/approval/approval.schema.json) |
 | `Workspace` | WorkspaceSpec (creation input only) | [`schemas/execution/workspace-spec.schema.json`](../../schemas/execution/workspace-spec.schema.json) |
 
 Three entities in this list have **no contract at all** today: `Agent`, `ToolRequest` and
