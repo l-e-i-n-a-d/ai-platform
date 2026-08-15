@@ -75,23 +75,16 @@ The engineering organization uses:
 
 - Microsoft Azure
 
-## Kubernetes
-
-- Azure Kubernetes Service (AKS)
-- Kubernetes
-- Helm
-
 ## Data
 
 - Azure Cosmos DB
 - Azure Blob Storage
 
-## Security
+## Optional Azure Services
 
-- Microsoft Entra ID
-- Azure Workload Identity
-- Azure Key Vault
-- Azure RBAC
+- Azure Key Vault when centralized secret management becomes necessary
+
+Azure services should only be introduced when they solve a demonstrated requirement.
 
 ## Source Control / CI
 
@@ -128,12 +121,14 @@ The platform does NOT use:
 - PostgreSQL
 - Kafka
 - a dedicated graph database
+- Microsoft Entra ID as a V1 authentication requirement
+- Kubernetes / AKS as a V1 execution requirement
 
-Do not introduce these technologies.
+Do not introduce these technologies or requirements into V1.
 
 If a future requirement appears to justify one of them, document the architectural reasoning first and create an ADR rather than introducing it silently.
 
-For event-driven behavior, prefer the simplest Azure-native mechanism that satisfies the requirement.
+For event-driven behavior, prefer the simplest mechanism that satisfies the demonstrated requirement.
 
 Cosmos DB Change Feed may be considered where appropriate.
 
@@ -143,15 +138,68 @@ Do not introduce infrastructure merely because it is common in other AI platform
 
 ---
 
-# 5. Architectural Model
+# 5. V1 Architectural Principles
 
-The target platform consists conceptually of:
+## Local First
+
+Every team member should be able to run the AI Engineering Platform on their local machine.
+
+V1 must not require:
+
+- Kubernetes
+- AKS
+- a centrally hosted execution cluster
+- Microsoft Entra ID
+
+The initial platform should be easy for a developer to clone, configure and run locally.
+
+## Execution Independence
+
+Workflow semantics must not depend on the execution infrastructure.
+
+The architecture should use an execution abstraction such as:
+
+```text
+Graph
+  |
+  v
+Agent
+  |
+  v
+Execution Interface
+  |
+  +--> Local Executor       V1
+  |
+  +--> Kubernetes Executor  Future
+```
+
+Agents and graphs must not contain Kubernetes-specific logic.
+
+## Future Kubernetes Support
+
+Kubernetes/AKS may become a future execution backend if it provides meaningful advantages such as:
+
+- stronger isolation
+- resource control
+- parallel execution
+- reproducibility
+- centralized execution
+- workload scheduling
+- operational scalability
+
+Adding Kubernetes later must not require redesigning graph or agent semantics.
+
+---
+
+# 6. Architectural Model
+
+The V1 platform consists conceptually of:
 
 ```text
                     Developer
                         |
                         v
-               Quarkus Control Plane
+              Local AI Platform
                         |
           +-------------+-------------+
           |             |             |
@@ -172,20 +220,19 @@ The target platform consists conceptually of:
                         |
                         v
                   Model Gateway
-                   /         \
-                Claude       GPT
+                   /                         Claude       GPT
                    \         /
                     \       /
                      v     v
-                  AKS Worker
-                 / isolated \
-                /  workspace \
-               +-------------+
-                       |
-                    Git / CI
+                 Local Executor
+                        |
+                        v
+                 Local Workspace
+                        |
+                     Git / CI
 ```
 
-Supporting infrastructure:
+Supporting services:
 
 ```text
 Cosmos DB
@@ -195,25 +242,21 @@ Blob Storage
     → large artifacts
 
 Key Vault
-    → secrets
-
-Entra ID
-    → identity
-
-AKS
-    → isolated execution
+    → optional future centralized secret management
 ```
+
+The V1 platform should minimize infrastructure requirements and maximize developer portability.
 
 ---
 
-# 6. Control Plane
+# 7. Control Plane
 
 The control plane is primarily implemented using Quarkus.
 
 It is responsible for:
 
 - APIs
-- authentication and authorization
+- local platform lifecycle
 - work/run lifecycle
 - durable execution state
 - graph lifecycle
@@ -231,7 +274,7 @@ Do not execute arbitrary repository commands directly inside the control plane.
 
 ---
 
-# 7. Agent Runtime
+# 8. Agent Runtime
 
 The agent runtime is Python-based.
 
@@ -268,7 +311,7 @@ Do not create these agents until their contracts and responsibilities are suffic
 
 ---
 
-# 8. Graph Engine
+# 9. Graph Engine
 
 Important engineering workflows must be represented as explicit, versioned graphs.
 
@@ -285,6 +328,7 @@ Graphs may eventually support:
 - recovery
 - compensation
 - graph versioning
+- resumability
 
 Do not hide complex workflow logic inside a single prompt.
 
@@ -294,7 +338,38 @@ The term "graph" refers primarily to workflow execution semantics.
 
 ---
 
-# 9. Context Engine
+# 10. Durable Execution
+
+Durable execution is a core architectural concern.
+
+The platform should eventually survive:
+
+- process crashes
+- local service restarts
+- model timeouts
+- tool failures
+- network failures
+- workspace failures
+- human approval pauses
+- long-running workflows
+
+Cosmos DB is the initial durable state store.
+
+The execution model must support:
+
+- idempotency
+- checkpoints
+- resumability
+- retries
+- cancellation
+- optimistic concurrency
+- clear run state transitions
+
+Do not rely solely on in-memory state for workflow execution.
+
+---
+
+# 11. Context Engine
 
 Context is an engineering concern.
 
@@ -321,12 +396,13 @@ Prefer:
 - progressive disclosure
 - traceability
 - context budgets
+- provenance
 
 The platform should eventually be able to explain why a particular piece of context was supplied to an agent.
 
 ---
 
-# 10. Model Gateway
+# 12. Model Gateway
 
 Agents must access models through a provider-neutral abstraction.
 
@@ -354,7 +430,7 @@ Provider-specific implementation belongs behind the model gateway.
 
 ---
 
-# 11. Tool Architecture
+# 13. Tool Architecture
 
 Agent capabilities must be exposed through explicit tools.
 
@@ -372,7 +448,7 @@ Examples include:
 - update Jira
 - search Confluence
 - publish documentation
-- inspect Kubernetes resources
+- inspect Kubernetes resources in future deployments
 
 Tools must have:
 
@@ -382,6 +458,7 @@ Tools must have:
 - observability
 - error handling
 - clear side-effect semantics
+- idempotency where applicable
 
 Prefer read-only capabilities by default.
 
@@ -389,18 +466,22 @@ Write/destructive capabilities should require stronger authorization and potenti
 
 ---
 
-# 12. Execution Environment
+# 14. Local Execution Environment
 
-AI engineering workloads should execute in isolated AKS environments.
+V1 AI engineering workloads execute locally.
 
-Workspaces should preferably be:
+The platform should provide a controlled local execution backend.
 
-- isolated
-- ephemeral
+Local workspaces should preferably be:
+
+- isolated as reasonably practical
 - reproducible
 - observable
-- resource-limited
-- identity-scoped
+- resource-aware
+- identity-scoped to the local developer
+- associated with a specific platform run
+
+The local executor may run repository commands required for development workflows.
 
 Typical tooling may include:
 
@@ -411,7 +492,7 @@ Typical tooling may include:
 - Node.js
 - Angular tooling
 - Helm
-- kubectl
+- kubectl when a task requires it
 - Git
 - testing tools
 - static analysis
@@ -420,15 +501,44 @@ Do not assume every workspace needs every tool.
 
 Prefer task-specific workspace capabilities.
 
+The control plane must not gain unrestricted shell access merely because local execution is supported.
+
 ---
 
-# 13. Persistence
+# 15. Future Kubernetes Execution
+
+Kubernetes is a future execution option, not a V1 dependency.
+
+If introduced later, it should implement the same execution abstraction used by the local executor.
+
+Potential future architecture:
+
+```text
+                Graph / Agent
+                     |
+                     v
+              Execution Interface
+                 /                          /                           v              v
+       Local Executor    Kubernetes Executor
+          V1                   V2+
+                              |
+                             AKS
+```
+
+Kubernetes-specific scheduling, networking, isolation and lifecycle concerns must remain inside the Kubernetes executor.
+
+Do not leak Kubernetes concepts into graph definitions or agent logic.
+
+---
+
+# 16. Persistence
 
 Use Azure Cosmos DB for platform operational state.
 
 Potential state includes:
 
 - work items
+- graph definitions
 - graph runs
 - graph nodes
 - agent executions
@@ -455,7 +565,7 @@ Do not introduce another database without an architectural decision.
 
 ---
 
-# 14. External Systems
+# 17. External Systems
 
 ## Jira
 
@@ -502,21 +612,28 @@ Agents should not automatically have merge or production-deployment authority.
 
 ---
 
-# 15. Security
+# 18. Security
 
-Security is a core platform capability.
+V1 is primarily designed for local developer execution.
 
-Prefer:
+Removing Entra ID does NOT mean removing security requirements.
 
-- Microsoft Entra ID
-- AKS Workload Identity
-- Azure Key Vault
-- Azure RBAC
-- scoped GitHub permissions
-- capability-based tools
-- isolated execution
-- explicit policies
-- human approval
+Security must still enforce:
+
+- explicit tool capabilities
+- repository boundaries
+- command restrictions
+- secret isolation
+- model/API credential protection
+- approval requirements for consequential actions
+- auditability of platform actions
+- least privilege
+
+V1 must not require Microsoft Entra ID.
+
+Do not introduce a distributed identity system unless the deployment model requires it.
+
+If the platform later becomes a centrally hosted multi-user service, authentication and authorization must be revisited as an explicit architectural decision.
 
 Never:
 
@@ -532,7 +649,7 @@ Every meaningful consequential action should be attributable to a user, run, age
 
 ---
 
-# 16. Human Approval
+# 19. Human Approval
 
 Human approval is a first-class workflow capability.
 
@@ -551,7 +668,7 @@ Do not design the system around the assumption that agents should always operate
 
 ---
 
-# 17. Observability
+# 20. Observability
 
 Observability is a first-class architectural concern.
 
@@ -562,6 +679,10 @@ The future observability stack is expected to include:
 - Loki
 - Grafana
 - Alertmanager
+
+Do NOT make the full observability stack a V1 infrastructure requirement.
+
+The V1 platform should establish telemetry contracts and correlation identifiers so the full stack can be added later.
 
 The platform should eventually expose:
 
@@ -580,7 +701,7 @@ Examples:
 - model latency
 - token usage
 - estimated model cost
-- workspace provisioning time
+- workspace execution time
 - CI success/failure
 - task success rate
 
@@ -615,7 +736,7 @@ Model Invocation
    |
 Tool Invocation
    |
-AKS Workspace
+Local Workspace
    |
 Build
    |
@@ -632,11 +753,9 @@ Do not couple business logic directly to Grafana.
 
 Do not couple business logic directly to Prometheus or Loki when an instrumentation abstraction is appropriate.
 
-The initial platform does not need to deploy the complete observability stack, but components should be designed so observability can be added without architectural redesign.
-
 ---
 
-# 18. Evaluation
+# 21. Evaluation
 
 The platform must evaluate both:
 
@@ -694,7 +813,30 @@ GitHub PR
 
 ---
 
-# 19. Engineering Workflow
+# 22. Multi-Repository Engineering
+
+The platform will operate across multiple engineering repositories.
+
+The architecture must support:
+
+- repository discovery
+- repository-specific instructions
+- repository-specific build systems
+- repository-specific tests
+- shared engineering standards
+- cross-repository changes
+- repository permissions
+- repository context
+- multiple branches
+- pull requests across repositories
+
+Do not assume all repositories are identical.
+
+Repository-specific instructions must be respected alongside platform-level instructions.
+
+---
+
+# 23. Engineering Workflow
 
 Before implementing a significant change:
 
@@ -718,7 +860,7 @@ Do not introduce infrastructure simply because it may be useful later.
 
 ---
 
-# 20. Architecture Decisions
+# 24. Architecture Decisions
 
 Use Architecture Decision Records for significant decisions.
 
@@ -728,7 +870,9 @@ Examples:
 - graph execution semantics
 - model gateway design
 - agent runtime boundaries
-- AKS isolation
+- execution abstraction
+- local workspace isolation
+- future Kubernetes execution
 - authorization model
 - context architecture
 - observability architecture
@@ -744,7 +888,7 @@ Before making a significant architectural change, check existing ADRs.
 
 ---
 
-# 21. Implementation Status
+# 25. Implementation Status
 
 Always distinguish between:
 
@@ -760,7 +904,7 @@ Do not create fake implementations merely to make an architecture diagram appear
 
 ---
 
-# 22. Current Repository Phase
+# 26. Current Repository Phase
 
 The repository is currently in the architectural scaffold phase.
 
@@ -776,9 +920,11 @@ The immediate objective is to:
 
 Do not jump directly to autonomous multi-agent workflows.
 
+V1 should prove that a developer can run the platform locally and execute a useful, observable and verifiable engineering workflow.
+
 ---
 
-# 23. Important Development Rule
+# 27. Important Development Rule
 
 When requirements are ambiguous:
 
@@ -796,7 +942,7 @@ Prefer the simplest architecture that satisfies the demonstrated requirement.
 
 ---
 
-# 24. Self-Hosting / Dogfooding
+# 28. Self-Hosting / Dogfooding
 
 Eventually, the AI Engineering Platform should be capable of helping develop and maintain itself.
 
@@ -818,7 +964,7 @@ Reliability and safety come before autonomy.
 
 ---
 
-# 25. Copilot Behavior
+# 29. Copilot Behavior
 
 When working in this repository:
 
@@ -829,6 +975,8 @@ When working in this repository:
 - Do not introduce Kafka.
 - Do not introduce PostgreSQL.
 - Do not introduce a graph database.
+- Do not make Kubernetes or AKS a V1 requirement.
+- Do not make Microsoft Entra ID a V1 requirement.
 - Do not create unnecessary microservices.
 - Do not implement future phases prematurely.
 - Do not bypass security controls.
@@ -843,4 +991,3 @@ When a task is large, decompose it into smaller independently verifiable steps.
 The goal is not to produce the largest amount of code.
 
 The goal is to produce the smallest correct, maintainable and verifiable change.
-
