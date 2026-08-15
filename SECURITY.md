@@ -97,6 +97,29 @@ as potentially untrusted.
 
 Instructions contained in retrieved content must not automatically override platform policies or tool permissions.
 
+The mechanism is structural (ADR-0013 §5): every context item carries a trust class, and
+`UNTRUSTED` content is delimited and provenance-labelled rather than concatenated into the
+instruction region of a prompt. A repository's own instruction files are `UNTRUSTED` — they may
+influence style and approach, never capabilities, commands, network policy, approval
+requirements or budgets (ADR-0014 §6).
+
+### Retrieval credentials
+
+Context retrieval from Jira, Confluence and GitHub authenticates as **the developer running the
+platform**, using their personal token or OAuth grant.
+
+A broadly privileged shared service account must never be used for context retrieval. Doing so
+would let any developer obtain, through an agent, content they cannot open themselves —
+restricted Confluence spaces, private repositories, restricted Jira projects — and would
+misattribute the access in the source system's own audit log. Retrieved context is bounded by
+entitlements the organisation already manages.
+
+`ACCESS_DENIED` is a normal recorded outcome and is never retried with a more privileged
+credential. The platform's own identity is used for actions, never to widen retrieval.
+
+`contextPolicy.excludePaths` is a secret-exposure control as much as a relevance control, and is
+enforced during retrieval rather than during rendering.
+
 ---
 
 ## 6. Human Approval

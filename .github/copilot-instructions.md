@@ -205,41 +205,44 @@ Adding Kubernetes later must not require redesigning graph or agent semantics.
 The V1 platform consists conceptually of:
 
 ```text
-                    Developer
-                        |
-                        v
-              Local AI Platform
-                        |
-          +-------------+-------------+
-          |             |             |
-          v             v             v
-        Jira        Confluence      GitHub
-          |             |             |
-          +-------------+-------------+
-                        |
-                        v
-                  Context Engine
-                        |
-                        v
-                   Graph Engine
-                        |
-                        v
-                  Agent Runtime
-                     Python
-                        |
-                        v
-                  Model Gateway
-                   /                         Claude       GPT
-                   \         /
-                    \       /
-                     v     v
-                 Local Executor
-                        |
-                        v
-                 Local Workspace
-                        |
-                     Git / CI
+                          Developer
+                              |
+                              v
+                             CLI
+                              |
+                              v
+            +---------------------------------------+
+            |          Control Plane (Java)         |
+            |                                       |
+            |   Graph Engine                        |
+            |       |                               |
+            |       v                               |
+            |   Agent Runtime  (Python, stateless)  |
+            |       |          |                    |
+            |       |          +---> Model Gateway ---> Claude
+            |       |          |                    |    GPT
+            |       v          v                    |
+            |   Tool Layer  <---- Context Engine <------ Jira
+            |       |    |                          |    Confluence
+            |       |    +---> Integrations ----------->  GitHub
+            |       v                               |
+            |   Execution Interface                 |
+            +---------------------------------------+
+                              |
+                    +---------+---------+
+                    |                   |
+                    v                   v
+            Local Executor      Kubernetes Executor
+                 (V1)                 (future)
+                    |
+                    v
+             Local Workspace
+                    |
+                    v
+                 Git / CI
 ```
+
+Dependency direction matters. The graph engine drives the agent runtime; the runtime reaches the model gateway directly and the tool layer through callbacks. The tool layer is the only path to integrations and to the execution interface. The context engine is a service called throughout a run, not a stage above the graph. The model gateway is a leaf and never invokes execution.
 
 Supporting services:
 
@@ -408,6 +411,17 @@ Prefer:
 - provenance
 
 The platform should eventually be able to explain why a particular piece of context was supplied to an agent.
+
+Context is delivered as a **context bundle** (ADR-0013): an immutable, content-addressed artifact with a token budget, revision pins, an ordered item list and an explicit exclusion list. Every item records source system, source id, revision, acting identity, retrieval strategy, relevance score, token count, inclusion reason and trust class. Nothing is dropped or truncated silently.
+
+Rules that must not be weakened:
+
+- Context assembly belongs to the control plane. The agent runtime receives `contextBundleRef` and never queries Jira, Confluence or GitHub itself.
+- Retrieval authenticates as **the developer running the platform**. Never use a broadly privileged shared service account for context retrieval — it would let any developer obtain, through an agent, content they cannot open themselves.
+- Every item carries a trust class: `PLATFORM` or `UNTRUSTED`. All retrieved content, including a repository's own instruction files, is `UNTRUSTED` and must be delimited and provenance-labelled rather than concatenated into the instruction region.
+- Repositories are pinned to a commit SHA for the life of a run; issues and pages record their version. Refreshing supersedes the bundle and invalidates approvals derived from the old one.
+- Budget eviction is tiered and deterministic. Tier 0 (task, objective, output contract) is never evictable.
+- No embedding index or vector store in V1. `strategy` is an open enum so semantic retrieval can be added later without changing the contract.
 
 ---
 

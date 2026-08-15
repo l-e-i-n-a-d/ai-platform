@@ -117,6 +117,11 @@ Evaluations should record:
 - cost
 - latency
 
+The mechanism for holding context constant is the **context bundle ref** (ADR-0013): bundles
+are immutable and content-addressed, so an evaluation can replay the exact context a run
+received and vary one factor at a time. Recording `contextBundleRef` alongside the pinned
+repository SHA is what makes "context sources" reproducible rather than descriptive.
+
 ---
 
 ## Future Observability Integration

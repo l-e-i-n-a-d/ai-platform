@@ -35,42 +35,47 @@ The platform is designed as an engineering harness rather than a single autonomo
 ## 2. V1 Architecture
 
 ```text
-Developer
-    |
-    v
-Local AI Engineering Platform
-    |
-    +------------------+------------------+
-    |                  |                  |
-    v                  v                  v
-  Jira             Confluence          GitHub
-    |                  |                  |
-    +------------------+------------------+
-                       |
-                       v
-                Context Engine
-                       |
-                       v
-                  Graph Engine
-                       |
-                       v
-                 Agent Runtime
-                    Python
-                       |
-                       v
-                 Model Gateway
-                  /                      Claude Sonnet   GPT
-                  \         /
-                   \       /
-                    v     v
-                Local Executor
-                       |
-                       v
-                Local Workspace
-                       |
-                       v
-                    Git / CI
+                          Developer
+                              |
+                              v
+                             CLI
+                              |
+                              v
+            +---------------------------------------+
+            |          Control Plane (Java)         |
+            |                                       |
+            |   Graph Engine                        |
+            |       |                               |
+            |       v                               |
+            |   Agent Runtime  (Python, stateless)  |
+            |       |          |                    |
+            |       |          +---> Model Gateway ---> Claude Sonnet
+            |       |          |                    |    GPT
+            |       v          v                    |
+            |   Tool Layer  <---- Context Engine <------ Jira
+            |       |    |                          |    Confluence
+            |       |    +---> Integrations ----------->  GitHub
+            |       v                               |
+            |   Execution Interface                 |
+            +---------------------------------------+
+                              |
+                    +---------+---------+
+                    |                   |
+                    v                   v
+            Local Executor      Kubernetes Executor
+                 (V1)                 (future)
+                    |
+                    v
+             Local Workspace
+                    |
+                    v
+                 Git / CI
 ```
+
+The graph engine drives the agent runtime; the runtime reaches the model gateway and, through
+callbacks, the tool layer. The tool layer is the only path to integrations and to the execution
+interface. The context engine is a **service called throughout a run**, not a stage that runs
+once before it. The model gateway is a leaf: it never invokes execution.
 
 Supporting persistence:
 
@@ -181,7 +186,14 @@ Builds relevant context from:
 - execution history
 - evaluations
 
-Context must be relevance-driven and traceable.
+Context is delivered as an immutable, content-addressed **context bundle** with an explicit
+token budget, revision pins, per-item provenance and an exclusion list. Retrieval authenticates
+as the developer running the platform, so context can never exceed their own entitlements.
+Every item carries a trust class, and untrusted content is delimited rather than merged into
+instructions.
+
+Context must be relevance-driven and traceable. See
+[ADR-0013](docs/decisions/0013-context-bundle-contract.md).
 
 ### Model Gateway
 

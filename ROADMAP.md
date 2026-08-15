@@ -31,6 +31,7 @@ Goals:
 - local persistence (see ADR-0007)
 - local artifact storage
 - repository registry and capability ceilings (see ADR-0014)
+- context bundles with budgets, pinning and provenance (see ADR-0013)
 - basic Jira integration
 - basic Confluence integration
 - basic GitHub integration

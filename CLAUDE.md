@@ -113,6 +113,21 @@ Keep provider-specific code behind the model gateway.
 
 Do not recreate these systems inside the platform.
 
+Context retrieval from all three authenticates as **the developer running the platform**, never
+a shared privileged service account (ADR-0013 §4). Retrieved context is bounded by the
+developer's own entitlements, and every item records the identity it was retrieved as.
+
+---
+
+## Context
+
+Context is delivered as an immutable, content-addressed **context bundle** (ADR-0013), assembled
+by the control plane and fetched by the runtime by reference. It carries a token budget,
+revision pins, per-item provenance, trust classes and an explicit exclusion list.
+
+Never assemble context inside the agent runtime. Never drop or truncate an item silently. Never
+concatenate `UNTRUSTED` content into the instruction region of a prompt.
+
 ---
 
 ## Persistence
